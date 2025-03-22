@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, RefreshCw } from "lucide-react";
+import { Upload, Loader2, RefreshCw, Leaf } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,38 +10,53 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-interface DetectionResult {
-  disease: string;
-  confidence: number;
-  treatment: string;
-  prevention: string;
-  supplement_name: string;
-  supplement_image: string;
-  supplement_link: string;
-}
+import { motion } from "framer-motion";
 
 const DiseaseDetection = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<DetectionResult | null>(null);
+  const [result, setResult] = useState(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
     if (file) {
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
-      setResult(null); // Reset previous results
+      setResult(null);
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!selectedImage) {
+      toast({ title: "No image selected", description: "Please upload an image." });
+      return;
+    }
     
-   
+    setIsLoading(true);
+    const formData = new FormData();
+    formData.append("image", selectedImage);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/predict", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get prediction");
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      toast({ title: "Error", description: error.message });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -51,170 +66,127 @@ const DiseaseDetection = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 bg-gradient-to-r from-green-700 to-green-500 rounded-2xl p-6 text-white shadow-lg">
-        <h1 className="text-3xl font-bold mb-2">Plant Disease Detection</h1>
-        <p className="text-green-100">Upload a photo of your plant to detect diseases</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-4xl mx-auto space-y-8"
+      >
+        <div className="text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="inline-block p-3 rounded-full bg-green-100 mb-4"
+          >
+            <Leaf className="h-8 w-8 text-green-600" />
+          </motion.div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Plant Disease Detection</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Upload a photo of your plant's affected area, and our AI will analyze it for potential diseases.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Image</CardTitle>
-            <CardDescription>
-              Select a clear image of the affected plant part
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-                id="image-upload"
-              />
-              <label
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card className="shadow-xl rounded-xl overflow-hidden border-0 bg-white/90 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+              <CardTitle className="text-2xl font-bold">Upload Image</CardTitle>
+              <CardDescription className="text-green-50">Select a clear image of the affected plant area</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 p-8">
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
+              <motion.label
                 htmlFor="image-upload"
-                className="cursor-pointer block"
+                className="cursor-pointer block text-center border-2 border-dashed border-gray-300 rounded-xl p-6 transition-all hover:border-green-500 hover:bg-green-50"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
               >
                 {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Selected plant"
-                      className="max-h-[300px] mx-auto rounded-lg"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity rounded-lg">
-                      <p className="text-white">Click to change image</p>
-                    </div>
-                  </div>
+                  <motion.img
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    src={imagePreview}
+                    alt="Selected"
+                    className="max-h-[400px] mx-auto rounded-lg shadow-lg"
+                  />
                 ) : (
-                  <div className="py-8">
-                    <Upload className="h-12 w-12 mx-auto text-gray-400 mb-2" />
-                    <p className="text-gray-500">Click to upload an image</p>
+                  <div className="py-12">
+                    <Upload className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600 text-lg">Click or drag and drop to upload an image</p>
+                    <p className="text-sm text-gray-500 mt-2">Supported formats: JPG, PNG, WEBP</p>
                   </div>
                 )}
-              </label>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSubmit}
-                className="flex-1"
-                disabled={!selectedImage || isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  'Detect Disease'
-                )}
-              </Button>
-              {selectedImage && (
+              </motion.label>
+              <div className="flex gap-4 justify-center">
                 <Button
-                  variant="outline"
-                  onClick={handleReset}
-                  disabled={isLoading}
+                  onClick={handleSubmit}
+                  disabled={!selectedImage || isLoading}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-2 rounded-full hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  {isLoading ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader2 className="h-5 w-5" />
+                    </motion.div>
+                  ) : (
+                    "Analyze Image"
+                  )}
                 </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {result ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Detection Results</CardTitle>
-              <CardDescription>
-                Analysis of the uploaded plant image
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Detected Disease</h3>
-                <p className="text-lg text-green-700">{result.disease}</p>
-                <p className="text-sm text-gray-500">
-                  Confidence: {(result.confidence * 100).toFixed(2)}%
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Treatment</h3>
-                <p className="text-gray-700">{result.treatment}</p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Prevention</h3>
-                <p className="text-gray-700">{result.prevention}</p>
-              </div>
-
-              {result.supplement_name && (
-                <div className="space-y-2 mt-4 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold">Recommended Product</h3>
-                  <div className="flex items-center gap-4">
-                    {result.supplement_image && (
-                      <img 
-                        src={result.supplement_image} 
-                        alt={result.supplement_name}
-                        className="w-20 h-20 object-cover rounded"
-                      />
-                    )}
-                    <div>
-                      <p className="font-medium">{result.supplement_name}</p>
-                      {result.supplement_link && (
-                        <a 
-                          href={result.supplement_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          View Product
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Instructions</CardTitle>
-              <CardDescription>
-                How to get the best results
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-green-700 font-semibold">1</span>
-                  </div>
-                  <p className="text-gray-600">Take a clear, well-lit photo of the affected plant part</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-green-700 font-semibold">2</span>
-                  </div>
-                  <p className="text-gray-600">Ensure the diseased area is clearly visible in the image</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-green-700 font-semibold">3</span>
-                  </div>
-                  <p className="text-gray-600">Upload the image and wait for the analysis results</p>
-                </div>
+                {selectedImage && (
+                  <Button
+                    variant="outline"
+                    onClick={handleReset}
+                    className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all"
+                  >
+                    <RefreshCw className="h-5 w-5" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {result && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="shadow-xl rounded-xl overflow-hidden border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                <CardTitle className="text-2xl font-bold">Detection Results</CardTitle>
+                <CardDescription className="text-blue-50">{result.title}</CardDescription>
+              </CardHeader>
+              <CardContent className="p-8 space-y-6">
+                <div className="bg-blue-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-3">Analysis</h3>
+                  <p className="text-gray-700 leading-relaxed">{result.description}</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-green-900 mb-3">Prevention Measures</h3>
+                  <p className="text-gray-700 leading-relaxed">{result.prevent}</p>
+                </div>
+                {result.image_url && (
+                  <div className="mt-6">
+                    <img
+                      src={result.image_url}
+                      alt={result.title}
+                      className="w-full max-w-md mx-auto rounded-lg shadow-lg"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };
