@@ -11,11 +11,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { LogOut, Settings, User, Menu, ChevronDown, Sprout } from "lucide-react";
+import { LogOut, Settings, User, Menu, ChevronDown, Sprout, Languages } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import GoogleTranslate from "./GoogleTranslate";
 
 const DEFAULT_AVATAR_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s";
+
+// Language options
+const languages = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'हिंदी (Hindi)' },
+  { code: 'pa', label: 'ਪੰਜਾਬੀ (Punjabi)' },
+  { code: 'gu', label: 'ગુજરાતી (Gujarati)' },
+  { code: 'bn', label: 'বাংলা (Bengali)' },
+  { code: 'mr', label: 'मराठी (Marathi)' },
+  { code: 'te', label: 'తెలుగు (Telugu)' },
+  { code: 'ta', label: 'தமிழ் (Tamil)' },
+  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
+  { code: 'ml', label: 'മലയാളം (Malayalam)' },
+  { code: 'or', label: 'ଓଡ଼ିଆ (Odia)' },
+  { code: 'as', label: 'অসমীয়া (Assamese)' }
+];
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -44,6 +61,7 @@ export default function Navbar() {
       }
     }
   };
+
   // Define navigation items based on user login status
   const navItems = [
     { to: "/", label: "Home" },
@@ -77,22 +95,27 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 bg-green-800 rounded-full px-3 py-1">
-              <Button 
-                variant="ghost" 
-                className="text-sm text-white hover:text-green-200 hover:bg-transparent"
-                onClick={() => handleLanguageChange('hi')}
-              >
-                हिंदी
-              </Button>
-              <span className="text-green-400">/</span>
-              <Button 
-                variant="ghost" 
-                className="text-sm text-white hover:text-green-200 hover:bg-transparent"
-                onClick={() => handleLanguageChange('en')}
-              >
-                English
-              </Button>
+            <div className="hidden md:flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-2">
+                    <Languages className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white">
+                  <DropdownMenuLabel className="text-gray-700">Other Languages</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {languages.map((lang) => (
+                    <DropdownMenuItem
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className="cursor-pointer hover:bg-green-50"
+                    >
+                      {lang.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {user ? (
@@ -164,22 +187,36 @@ export default function Navbar() {
                 {item.label}
               </RouterLink>
             ))}
-            <div className="flex items-center gap-2 px-4 py-2 border-t border-green-700 mt-4">
-              <Button 
-                variant="ghost" 
-                className="text-sm text-white hover:text-green-200"
-                onClick={() => handleLanguageChange('hi')}
-              >
-                हिंदी
-              </Button>
-              <span className="text-green-400">/</span>
-              <Button 
-                variant="ghost" 
-                className="text-sm text-white hover:text-green-200"
-                onClick={() => handleLanguageChange('en')}
-              >
-                English
-              </Button>
+            <div className="flex flex-col gap-2 px-4 py-2 border-t border-green-700 mt-4">
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  className="text-sm text-white hover:text-green-200"
+                  onClick={() => handleLanguageChange('en')}
+                >
+                  English
+                </Button>
+                <span className="text-green-400">/</span>
+                <Button 
+                  variant="ghost" 
+                  className="text-sm text-white hover:text-green-200"
+                  onClick={() => handleLanguageChange('hi')}
+                >
+                  हिंदी
+                </Button>
+              </div>
+              <div className="space-y-1">
+                {languages.filter(lang => !['en', 'hi'].includes(lang.code)).map((lang) => (
+                  <Button
+                    key={lang.code}
+                    variant="ghost"
+                    className="w-full text-left text-sm text-white hover:text-green-200 justify-start"
+                    onClick={() => handleLanguageChange(lang.code)}
+                  >
+                    {lang.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         )}
