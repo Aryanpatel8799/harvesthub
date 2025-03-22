@@ -51,14 +51,41 @@ export default function Navbar() {
   };
 
   const handleLanguageChange = (lang: string) => {
-    // @ts-ignore - Access the Google Translate API
-    if (window.google && window.google.translate) {
-      // @ts-ignore - Access the select element
+    try {
+      // Method 1: Try using the combo box
       const select = document.querySelector('.goog-te-combo') as HTMLSelectElement;
       if (select) {
         select.value = lang;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
+        select.dispatchEvent(new Event('change'));
+        return;
       }
+
+      // Method 2: Try using the translate function directly
+      const translateElement = window.google?.translate;
+      if (translateElement) {
+        if (lang === 'en') {
+          translateElement.translate.restore();
+        } else {
+          translateElement.translate.translate(document.documentElement, 'en', lang);
+        }
+        return;
+      }
+
+      // Method 3: Try using the iframe method
+      const iframe = document.querySelector('.goog-te-menu-frame') as HTMLIFrameElement;
+      if (iframe) {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (iframeDoc) {
+          const items = iframeDoc.querySelectorAll('.goog-te-menu2-item');
+          items.forEach(item => {
+            if (item.textContent?.includes(lang === 'hi' ? 'Hindi' : 'English')) {
+              (item as HTMLElement).click();
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error changing language:', error);
     }
   };
 
