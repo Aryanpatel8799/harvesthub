@@ -57,25 +57,33 @@ const authMiddleware = async (req, res, next) => {
       }
     } else {
       console.log('Invalid user type', decoded.type);
-      return res.status(401).json({ message: 'Invalid user type' });
+      return res.status(400).json({ message: 'Invalid user type' });
     }
 
-    // Set user data to request object
+    // Set user in request object with explicit type from token
     req.user = {
-      id: user._id,
-      type: decoded.type
+      ...user.toObject(),
+      type: decoded.type // Ensure type is explicitly set from token
     };
+    
+    // Ensure user has both _id and id properties
+    if (!req.user._id) {
+      req.user._id = user.id || decoded.id;
+    }
+    
+    if (!req.user.id) {
+      req.user.id = user._id || decoded.id;
+    }
+
+    console.log('Auth successful:', {
+      userId: req.user._id,
+      userType: req.user.type
+    });
 
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token format' });
-    }
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token expired' });
-    }
-    res.status(500).json({ message: 'Server error' });
+    res.status(401).json({ message: 'Authentication failed' });
   }
 };
 
@@ -89,8 +97,16 @@ const farmerOnly = (req, res, next) => {
 
 // Middleware to check if user is a consumer
 const consumerOnly = (req, res, next) => {
-  if (req.user.type !== 'consumer') {
-    return res.status(403).json({ message: 'Access denied. Consumers only.' });
+  console.log('Consumer check - User type:', {
+    userType: req.user?.type,
+    userId: req.user?._id?.toString() || req.user?.id?.toString() || 'undefined'
+  });
+  
+  if (!req.user || req.user.type !== 'consumer') {
+    return res.status(403).json({ 
+      message: 'Access denied. Consumers only.',
+      userType: req.user?.type || 'undefined' 
+    });
   }
   next();
 };

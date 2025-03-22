@@ -1,8 +1,8 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ShoppingCart, Key, Image, Star, StarHalf, User, Video } from "lucide-react";
-import { useState } from "react";
+import { Edit, Trash2, ShoppingCart, Key, Image, Star, StarHalf, User, Video, MapPin, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ export interface ProductCardProps {
   farmVideos?: Array<{ url: string; caption: string }>;
   totalOrders?: number;
   discount?: number;
+  description?: string;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -48,6 +49,20 @@ interface ConsumerDetails {
 interface Review {
   rating: number;
   comment: string;
+}
+
+interface FarmerDetails {
+  _id: string;
+  fullName: string;
+  email: string;
+  location: string;
+  description: string;
+  farmImages: Array<{ url: string; caption: string }>;
+  farmVideos: Array<{ url: string; caption: string }>;
+  totalOrders: number;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const ProductCard = ({
@@ -68,6 +83,7 @@ const ProductCard = ({
   farmVideos = [],
   totalOrders = 0,
   discount = 0,
+  description = '',
   onEdit,
   onDelete
 }: ProductCardProps) => {
@@ -79,6 +95,7 @@ const ProductCard = ({
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [displayedTotalOrders, setDisplayedTotalOrders] = useState(totalOrders);
   const [consumerDetails, setConsumerDetails] = useState<ConsumerDetails>({
     fullName: user?.fullName || '',
     phone: '',
@@ -90,6 +107,14 @@ const ProductCard = ({
     rating: 5,
     comment: ''
   });
+  const [farmerDetails, setFarmerDetails] = useState<FarmerDetails | null>(null);
+  const [loadingFarmer, setLoadingFarmer] = useState(false);
+
+  const getImageUrl = (url: string) => {
+    if (!url) return '/placeholder.jpg';
+    if (url.startsWith('http')) return url;
+    return `${import.meta.env.VITE_API_URL}${url}`;
+  };
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -131,6 +156,10 @@ const ProductCard = ({
 
     try {
       setIsSubmitting(true);
+      const actualPrice = discount > 0 ? price * (1 - discount / 100) : price;
+      const totalPrice = actualPrice * quantity;
+
+      // Create the order first
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders`, {
         method: 'POST',
         headers: {
@@ -141,7 +170,7 @@ const ProductCard = ({
           productId: _id,
           farmerId,
           quantity,
-          totalPrice: price * quantity,
+          totalPrice,
           consumerDetails: {
             ...consumerDetails,
             fullName: consumerDetails.fullName || user.fullName
@@ -155,11 +184,16 @@ const ProductCard = ({
         throw new Error(data.message || 'Failed to place order');
       }
 
-      toast({
-        title: "Success",
-        description: "Order placed successfully! The farmer will review your order.",
-      });
+      // Get the order ID from the response (handle both possible formats)
+      const orderId = data.order?._id || data.data?._id;
+      
+      if (!orderId) {
+        throw new Error('Order ID not found in response');
+      }
 
+      // Redirect to the checkout page with the order ID and amount
+      window.location.href = `/checkout?orderId=${orderId}&amount=${totalPrice}`;
+      
       setShowPurchaseDialog(false);
       setStep('quantity');
     } catch (error) {
@@ -258,12 +292,60 @@ const ProductCard = ({
     );
   };
 
+  const fetchFarmerDetails = async () => {
+    if (!farmerId) return;
+    
+    try {
+      setLoadingFarmer(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/farmers/${farmerId}`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch farmer details');
+      }
+
+      const data = await response.json();
+      if (data.farmer) {
+        setFarmerDetails(data.farmer);
+        
+        // Make sure we're using the most up-to-date totalOrders and rating from the server
+        if (typeof data.farmer.totalOrders === 'number') {
+          setDisplayedTotalOrders(data.farmer.totalOrders);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching farmer details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load farmer details",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingFarmer(false);
+    }
+  };
+
+  // Make sure we update the displayed totalOrders when the prop changes
+  useEffect(() => {
+    if (typeof totalOrders === 'number') {
+      setDisplayedTotalOrders(totalOrders);
+    }
+  }, [totalOrders]);
+
+  // Fetch farmer details when profile dialog opens
+  useEffect(() => {
+    if (showFarmerProfileDialog) {
+      fetchFarmerDetails();
+    }
+  }, [showFarmerProfileDialog]);
+
   return (
     <>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
         <div className="relative h-48">
           <img
-            src={image || '/placeholder.jpg'}
+            src={getImageUrl(image)}
             alt={name}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -359,10 +441,7 @@ const ProductCard = ({
                 <Star className="h-4 w-4 text-yellow-400" />
                 <span>{rating.toFixed(1)}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <ShoppingCart className="h-4 w-4 text-gray-500" />
-                <span>{totalOrders} orders</span>
-              </div>
+        
             </div>
             <span className="text-gray-500">{location}</span>
           </div>
@@ -429,7 +508,19 @@ const ProductCard = ({
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Price per {unit}</label>
-                <p className="text-sm text-gray-500">₹{price.toFixed(2)}</p>
+                {discount > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-500 line-through">₹{price.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-green-600">
+                      ₹{(price * (1 - discount / 100)).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-green-600">
+                      You save: {discount}% off
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">₹{price.toFixed(2)}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -447,7 +538,21 @@ const ProductCard = ({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Total Price</label>
-                <p className="text-lg font-bold">₹{(price * quantity).toFixed(2)}</p>
+                {discount > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-500 line-through">
+                      ₹{(price * quantity).toFixed(2)}
+                    </p>
+                    <p className="text-lg font-bold text-green-600">
+                      ₹{(price * (1 - discount / 100) * quantity).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-green-600">
+                      Total savings: ₹{(price * (discount / 100) * quantity).toFixed(2)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-lg font-bold">₹{(price * quantity).toFixed(2)}</p>
+                )}
               </div>
             </div>
           ) : (
@@ -494,31 +599,35 @@ const ProductCard = ({
           )}
 
           <DialogFooter>
-            {step === 'details' && (
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                className="mr-auto"
-              >
-                Back
-              </Button>
+            {step === 'quantity' ? (
+              <>
+                <Button variant="outline" onClick={handleDialogClose} className="mr-auto">
+                  Cancel
+                </Button>
+                <Button onClick={handleNext}>
+                  Next
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={handleBack} disabled={isSubmitting} className="mr-auto">
+                  Back
+                </Button>
+                <Button 
+                  onClick={handlePurchase} 
+                  disabled={isSubmitting || !consumerDetails.phone || !consumerDetails.address}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </div>
+                  ) : (
+                    `Proceed to Payment`
+                  )}
+                </Button>
+              </>
             )}
-            <Button
-              variant="outline"
-              onClick={handleDialogClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={step === 'quantity' ? handleNext : handlePurchase}
-              disabled={isSubmitting || (step === 'details' && (!consumerDetails.phone || !consumerDetails.address))}
-            >
-              {isSubmitting 
-                ? 'Processing...' 
-                : step === 'quantity'
-                  ? 'Next'
-                  : (rental ? 'Rent Now' : 'Buy Now')}
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -537,7 +646,7 @@ const ProductCard = ({
               farmImages.map((image, index) => (
                 <div key={index} className="relative aspect-[4/3] group">
                   <img
-                    src={`${import.meta.env.VITE_API_URL}/uploads/products${image.url}`}
+                    src={getImageUrl(image.url)}
                     alt={image.caption || `Farm photo ${index + 1}`}
                     className="w-full h-full object-cover rounded-lg shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
                   />
@@ -621,91 +730,138 @@ const ProductCard = ({
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-8 py-4">
-            {/* Basic Info */}
-            <div className="flex items-start gap-6 bg-gray-50 p-6 rounded-lg">
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-900">{farmerName}</h3>
-                <p className="text-gray-600 mt-1 flex items-center gap-2">
-                  <span className="inline-block w-4 h-4">📍</span>
-                  {location}
-                </p>
-                <div className="mt-4 flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-harvest-600" />
-                    <span className="text-gray-700 font-medium">{totalOrders} Orders</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-400" />
-                    <span className="text-gray-700 font-medium">{rating.toFixed(1)} Rating</span>
-                  </div>
-                </div>
-              </div>
+          {loadingFarmer ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-harvest-600"></div>
             </div>
-
-            {/* Farm Photos */}
-            {farmImages && farmImages.length > 0 && (
-              <div>
-                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Image className="w-5 h-5 text-harvest-600" />
-                  Farm Photos
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {farmImages.map((image, index) => (
-                    <div key={index} className="relative group rounded-lg overflow-hidden">
-                      <img
-                        src={`/uploads/products${image.url}`}
-                        alt={image.caption || `Farm photo ${index + 1}`}
-                        className="w-full aspect-video object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      {image.caption && (
-                        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                          <p className="text-white text-sm">{image.caption}</p>
+          ) : farmerDetails ? (
+            <div className="space-y-8 py-4">
+              {/* Basic Info Card */}
+              <div className="bg-white shadow-md rounded-xl overflow-hidden">
+                <div className="bg-harvest-50 p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-semibold text-gray-900">{farmerDetails.fullName}</h3>
+                      <p className="text-gray-600 flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-harvest-600" />
+                        {farmerDetails.location}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Member since {new Date(farmerDetails.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="text-center">
+                        <div className="bg-white rounded-full p-3 shadow-sm">
+                          <ShoppingCart className="w-6 h-6 text-harvest-600" />
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Farm Videos */}
-            {farmVideos && farmVideos.length > 0 && (
-              <div>
-                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Video className="w-5 h-5 text-harvest-600" />
-                  Farming Videos
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {farmVideos.map((video, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="relative rounded-lg overflow-hidden bg-gray-100">
-                        <video
-                          src={`${import.meta.env.VITE_API_URL}/uploads/products${video.url}`}
-                          controls
-                          className="w-full aspect-video"
-                          poster="/video-placeholder.jpg"
-                        >
-                          Your browser does not support the video tag.
-                        </video>
+                        <p className="mt-1 font-semibold">{displayedTotalOrders}</p>
+                        <p className="text-sm text-gray-600">Orders</p>
                       </div>
-                      {video.caption && (
-                        <p className="text-gray-700 text-sm">{video.caption}</p>
-                      )}
+                      <div className="text-center">
+                        <div className="bg-white rounded-full p-3 shadow-sm">
+                          <Star className="w-6 h-6 text-yellow-400" />
+                        </div>
+                        <p className="mt-1 font-semibold">
+                          {farmerDetails.rating ? farmerDetails.rating.toFixed(1) : "0.0"}
+                        </p>
+                        <p className="text-sm text-gray-600">Rating</p>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                </div>
+
+                {farmerDetails.description && (
+                  <div className="p-6 border-t border-gray-100">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3">About the Farm</h4>
+                    <p className="text-gray-600 leading-relaxed">{farmerDetails.description}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Farm Photos Section */}
+              <div className="bg-white shadow-md rounded-xl overflow-hidden">
+                <div className="p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Image className="w-5 h-5 text-harvest-600" />
+                    Farm Photos
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {farmerDetails.farmImages && farmerDetails.farmImages.length > 0 ? (
+                      farmerDetails.farmImages.map((image, index) => (
+                        <div key={index} className="relative aspect-video group">
+                          <img
+                            src={getImageUrl(image.url)}
+                            alt={image.caption || `Farm photo ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg shadow-sm transition-transform duration-300 group-hover:scale-[1.02]"
+                          />
+                          {image.caption && (
+                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent rounded-b-lg">
+                              <p className="text-white text-sm">
+                                {image.caption}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-2 flex flex-col items-center justify-center py-12 text-gray-400">
+                        <Image className="w-12 h-12 mb-3 opacity-50" />
+                        <p className="text-lg">No farm photos available</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* No Media Message */}
-            {(!farmImages?.length && !farmVideos?.length) && (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">No photos or videos available yet.</p>
-              </div>
-            )}
-          </div>
+              {/* Farm Videos Section */}
+              {farmerDetails.farmVideos && farmerDetails.farmVideos.length > 0 && (
+                <div className="bg-white shadow-md rounded-xl overflow-hidden">
+                  <div className="p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Video className="w-5 h-5 text-harvest-600" />
+                      Farm Videos ({farmerDetails.farmVideos.length})
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {farmerDetails.farmVideos.map((video, index) => {
+                        // Generate a unique key for each video
+                        const videoKey = `${farmerDetails._id}-video-${index}-${video.url}`;
+                        const videoUrl = getImageUrl(video.url);
+                        
+                        return (
+                          <div key={videoKey} className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                            <video
+                              src={videoUrl}
+                              controls
+                              preload="metadata"
+                              controlsList="nodownload"
+                              className="w-full h-full object-contain"
+                              poster="/video-placeholder.jpg"
+                            >
+                              <source src={videoUrl} type="video/mp4" />
+                              <source src={videoUrl} type="video/webm" />
+                              Your browser does not support the video tag.
+                            </video>
+                            {video.caption && (
+                              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                                <p className="text-white text-sm font-medium">
+                                  {video.caption}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              Failed to load farmer details. Please try again.
+            </div>
+          )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowFarmerProfileDialog(false)}>

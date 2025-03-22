@@ -107,7 +107,7 @@ export default function FarmerOrders() {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/orders/${orderId}/status`,
         {
-          method: 'PATCH',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -119,8 +119,10 @@ export default function FarmerOrders() {
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to update order status');
+        throw new Error(data.message || 'Failed to update order status');
       }
 
       toast({
@@ -128,14 +130,8 @@ export default function FarmerOrders() {
         description: `Order ${newStatus} successfully!`,
       });
 
-      // Update the order in the local state
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order._id === orderId
-            ? { ...order, status: newStatus, rejectionReason: newStatus === 'rejected' ? rejectionReason : order.rejectionReason }
-            : order
-        )
-      );
+      // Refresh orders after status update
+      await fetchOrders();
 
       setShowDetailsDialog(false);
       setRejectionReason("");
@@ -143,7 +139,7 @@ export default function FarmerOrders() {
       console.error('Error updating order status:', error);
       toast({
         title: "Error",
-        description: "Failed to update order status. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update order status. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -33,6 +33,7 @@ interface Product {
     location: string;
     _id: string;
     totalOrders: number;
+    description?: string;
   };
   rating: number;
   discount: number;
@@ -109,16 +110,22 @@ const Marketplace = () => {
 
       const data = await response.json();
       
-      // Check if data.products exists and is an array
       if (data.products && Array.isArray(data.products)) {
-        // Ensure all required fields exist before setting state
-        const validProducts = data.products.filter(product => 
-          product && 
-          product._id && 
-          product.farmer && 
-          product.farmer._id && 
-          product.farmer.fullName
-        );
+        const validProducts = data.products
+          .filter(product => product && product._id && product.farmer)
+          .map(product => ({
+            ...product,
+            farmer: {
+              ...product.farmer,
+              fullName: product.farmer.fullName || 'Unknown Farmer',
+              location: product.farmer.location || 'Unknown Location',
+              totalOrders: product.farmer.totalOrders || 0,
+              _id: product.farmer._id
+            },
+            images: product.images || [],
+            farmImages: product.farmImages || [],
+            farmVideos: product.farmVideos || []
+          }));
         setProducts(validProducts);
       } else {
         console.error('Invalid products data:', data);
@@ -131,7 +138,7 @@ const Marketplace = () => {
         description: "Failed to fetch products. Please try again.",
         variant: "destructive",
       });
-      setProducts([]); // Set empty array on error
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -288,14 +295,18 @@ const Marketplace = () => {
     if (!product.images || product.images.length === 0) {
       return '/placeholder-product.jpg';
     }
-    return `${import.meta.env.VITE_API_URL}${product.images[0].url}`;
+    const imageUrl = product.images[0].url;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
   };
 
   const getFarmImageUrl = (product: Product) => {
     if (!product.farmImages || product.farmImages.length === 0) {
       return '/placeholder-farm.jpg';
     }
-    return `${import.meta.env.VITE_API_URL}${product.farmImages[0].url}`;
+    const imageUrl = product.farmImages[0].url;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
   };
 
   return (
@@ -500,6 +511,7 @@ const Marketplace = () => {
                     farmVideos={product.farmVideos}
                     totalOrders={product.farmer.totalOrders}
                     discount={product.discount}
+                    description={product.farmer.description}
                     onEdit={isOwner ? () => handleEditProduct(product) : undefined}
                     onDelete={isOwner ? async () => {
                       try {
@@ -735,7 +747,9 @@ const Marketplace = () => {
               location: user?.location || '',
               description: user?.description || '',
               farmImages: user?.farmImages || [],
-              farmVideos: user?.farmVideos || []
+              farmVideos: user?.farmVideos || [],
+              totalOrders: user?.totalOrders || 0,
+              rating: user?.rating || 0
             }}
             onSubmit={async (formData) => {
               try {
@@ -757,7 +771,8 @@ const Marketplace = () => {
                 });
 
                 setShowFarmerProfileForm(false);
-                // Refresh the page or update user context if needed
+                // Refresh user data
+                window.location.reload();
               } catch (error) {
                 console.error('Error updating profile:', error);
                 toast({

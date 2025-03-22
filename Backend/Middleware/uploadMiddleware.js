@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const process = require('process');
 
 // Ensure upload directories exist
 const createUploadDirs = () => {
