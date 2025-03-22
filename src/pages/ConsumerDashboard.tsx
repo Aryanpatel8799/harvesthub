@@ -41,23 +41,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import OrderStatus from "@/components/OrderStatus";
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  unit: string;
+  farmer: {
+    _id: string;
+    fullName: string;
+    phone: string;
+  };
+}
 
 interface Order {
   _id: string;
-  product: {
-    name: string;
-    price: number;
-    unit: string;
-    farmer: {
-      fullName: string;
-      phone: string;
-    };
-  };
+  product: Product;
   quantity: number;
   totalPrice: number;
   status: 'pending' | 'accepted' | 'rejected' | 'completed';
   rejectionReason?: string;
   createdAt: string;
+  hasReviewed?: boolean;
 }
 
 const ConsumerDashboard = () => {
@@ -461,42 +467,26 @@ const ConsumerDashboard = () => {
             <CardTitle>Recent Orders</CardTitle>
             <CardDescription>Track your recent purchases</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Farmer</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order._id}>
-                    <TableCell>
-                      {order.product?.name || 'N/A'} ({order.quantity} {order.product?.unit || 'units'})
-                    </TableCell>
-                    <TableCell>{order.product?.farmer?.fullName || 'Unknown'}</TableCell>
-                    <TableCell>₹{order.totalPrice?.toFixed(2) || '0.00'}</TableCell>
-                    <TableCell>{getStatusBadge(order.status)}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setShowDetailsDialog(true);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="space-y-4">
+            {orders.map((order) => (
+              <OrderStatus
+                key={order._id}
+                orderId={order._id}
+                productId={order.product._id}
+                productName={order.product.name}
+                farmerName={order.product.farmer.fullName}
+                status={order.status}
+                quantity={order.quantity}
+                totalPrice={order.totalPrice}
+                createdAt={order.createdAt}
+                hasReviewed={order.hasReviewed || false}
+              />
+            ))}
+            {orders.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No orders yet
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -515,15 +505,15 @@ const ConsumerDashboard = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium mb-2">Product Details</h4>
-                  <p>Name: {selectedOrder.product?.name || 'N/A'}</p>
-                  <p>Quantity: {selectedOrder.quantity} {selectedOrder.product?.unit || 'units'}</p>
-                  <p>Price per unit: ₹{selectedOrder.product?.price?.toFixed(2) || '0.00'}</p>
+                  <p>Name: {selectedOrder.product.name || 'N/A'}</p>
+                  <p>Quantity: {selectedOrder.quantity} {selectedOrder.product.unit || 'units'}</p>
+                  <p>Price per unit: ₹{selectedOrder.product.price?.toFixed(2) || '0.00'}</p>
                   <p>Total Price: ₹{selectedOrder.totalPrice?.toFixed(2) || '0.00'}</p>
                 </div>
                 <div>
                   <h4 className="font-medium mb-2">Farmer Details</h4>
-                  <p>Name: {selectedOrder.product?.farmer?.fullName || 'Unknown'}</p>
-                  <p>Phone: {selectedOrder.product?.farmer?.phone || 'N/A'}</p>
+                  <p>Name: {selectedOrder.product.farmer.fullName || 'Unknown'}</p>
+                  <p>Phone: {selectedOrder.product.farmer.phone || 'N/A'}</p>
                 </div>
               </div>
 

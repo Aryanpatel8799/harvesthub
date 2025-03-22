@@ -33,6 +33,17 @@ export default function Navbar() {
     }
   };
 
+  const handleLanguageChange = (lang: string) => {
+    // @ts-ignore - Access the Google Translate API
+    if (window.google && window.google.translate) {
+      // @ts-ignore - Access the select element
+      const select = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+      if (select) {
+        select.value = lang;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+  };
   // Define navigation items based on user login status
   const navItems = [
     { to: "/", label: "Home" },
@@ -67,11 +78,19 @@ export default function Navbar() {
 
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-2 bg-green-800 rounded-full px-3 py-1">
-              <Button variant="ghost" className="text-sm text-white hover:text-green-200 hover:bg-transparent">
+              <Button 
+                variant="ghost" 
+                className="text-sm text-white hover:text-green-200 hover:bg-transparent"
+                onClick={() => handleLanguageChange('hi')}
+              >
                 हिंदी
               </Button>
               <span className="text-green-400">/</span>
-              <Button variant="ghost" className="text-sm text-white hover:text-green-200 hover:bg-transparent">
+              <Button 
+                variant="ghost" 
+                className="text-sm text-white hover:text-green-200 hover:bg-transparent"
+                onClick={() => handleLanguageChange('en')}
+              >
                 English
               </Button>
             </div>
@@ -146,11 +165,19 @@ export default function Navbar() {
               </RouterLink>
             ))}
             <div className="flex items-center gap-2 px-4 py-2 border-t border-green-700 mt-4">
-              <Button variant="ghost" className="text-sm text-white hover:text-green-200">
+              <Button 
+                variant="ghost" 
+                className="text-sm text-white hover:text-green-200"
+                onClick={() => handleLanguageChange('hi')}
+              >
                 हिंदी
               </Button>
               <span className="text-green-400">/</span>
-              <Button variant="ghost" className="text-sm text-white hover:text-green-200">
+              <Button 
+                variant="ghost" 
+                className="text-sm text-white hover:text-green-200"
+                onClick={() => handleLanguageChange('en')}
+              >
                 English
               </Button>
             </div>

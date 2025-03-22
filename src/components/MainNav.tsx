@@ -9,7 +9,8 @@ import {
   Truck,
   Recycle,
   Package,
-  LineChart
+  LineChart,
+  Search
 } from "lucide-react";
 
 interface NavItem {
@@ -42,6 +43,11 @@ export function MainNav({
       href: "/orders",
       icon: <Package className="w-4 h-4" />,
       farmerOnly: true,
+    },
+    {
+      title: "Disease Detection",
+      href: "/disease-detection",
+      icon: <Search className="w-4 h-4" />,
     },
     {
       title: "Weather & Market",

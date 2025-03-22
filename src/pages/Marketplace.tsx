@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Search, Filter, SlidersHorizontal, Plus } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, Plus, User } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import ProductForm from "@/components/ProductForm";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import FarmerProfileForm from "@/components/FarmerProfileForm";
 
 interface Product {
   _id: string;
@@ -26,12 +27,16 @@ interface Product {
   location: string;
   images: Array<{ url: string; caption: string }>;
   farmImages: Array<{ url: string; caption: string }>;
+  farmVideos: Array<{ url: string; caption: string }>;
   farmer: {
     fullName: string;
     location: string;
     _id: string;
+    totalOrders: number;
   };
   rating: number;
+  discount: number;
+  expiryDate: string;
 }
 
 // Add a new interface for the edit form
@@ -59,6 +64,7 @@ const Marketplace = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
+  const [showFarmerProfileForm, setShowFarmerProfileForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(null);
   const [filters, setFilters] = useState({
     category: "",
@@ -311,13 +317,22 @@ const Marketplace = () => {
               </p>
             </div>
             {user?.type === 'farmer' && (
-              <button
-                onClick={() => setShowProductForm(true)}
-                className="flex items-center px-4 py-2 bg-harvest-600 text-white rounded-md hover:bg-harvest-700 transition-colors"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Add Product
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFarmerProfileForm(true)}
+                  className="flex items-center px-4 py-2 bg-white border border-harvest-600 text-harvest-600 rounded-md hover:bg-harvest-50 transition-colors"
+                >
+                  <User className="w-5 h-5 mr-2" />
+                  My Profile
+                </button>
+                <button
+                  onClick={() => setShowProductForm(true)}
+                  className="flex items-center px-4 py-2 bg-harvest-600 text-white rounded-md hover:bg-harvest-700 transition-colors"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add Product
+                </button>
+              </div>
             )}
           </div>
 
@@ -482,6 +497,9 @@ const Marketplace = () => {
                     rentalPrice={product.rentalPrice}
                     rentalUnit={product.rentalUnit}
                     farmImages={product.farmImages}
+                    farmVideos={product.farmVideos}
+                    totalOrders={product.farmer.totalOrders}
+                    discount={product.discount}
                     onEdit={isOwner ? () => handleEditProduct(product) : undefined}
                     onDelete={isOwner ? async () => {
                       try {
@@ -699,6 +717,58 @@ const Marketplace = () => {
               Apply Filters
             </button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Farmer Profile Form Dialog */}
+      <Dialog open={showFarmerProfileForm} onOpenChange={(open) => !open && setShowFarmerProfileForm(false)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>My Farmer Profile</DialogTitle>
+            <DialogDescription>
+              Update your profile information, farm photos, and videos.
+            </DialogDescription>
+          </DialogHeader>
+          <FarmerProfileForm
+            initialData={{
+              fullName: user?.fullName || '',
+              location: user?.location || '',
+              description: user?.description || '',
+              farmImages: user?.farmImages || [],
+              farmVideos: user?.farmVideos || []
+            }}
+            onSubmit={async (formData) => {
+              try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/farmers/profile`, {
+                  method: 'PUT',
+                  body: formData,
+                  credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                  throw new Error(data.message || 'Failed to update profile');
+                }
+
+                toast({
+                  title: "Success",
+                  description: "Profile updated successfully!",
+                });
+
+                setShowFarmerProfileForm(false);
+                // Refresh the page or update user context if needed
+              } catch (error) {
+                console.error('Error updating profile:', error);
+                toast({
+                  title: "Error",
+                  description: error instanceof Error ? error.message : "Failed to update profile",
+                  variant: "destructive",
+                });
+              }
+            }}
+            onCancel={() => setShowFarmerProfileForm(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>

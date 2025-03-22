@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 // Register new consumer
-module.exports.registerConsumer = async (req, res) => {
+const registerConsumer = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
 
@@ -49,7 +49,7 @@ module.exports.registerConsumer = async (req, res) => {
 };
 
 // Login consumer
-module.exports.loginConsumer = async (req, res) => {
+const loginConsumer = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -93,7 +93,7 @@ module.exports.loginConsumer = async (req, res) => {
 };
 
 // Logout consumer
-module.exports.logoutConsumer = async (req, res) => {
+const logoutConsumer = async (req, res) => {
   try {
     const token = req.cookies.token;
 
@@ -116,7 +116,7 @@ module.exports.logoutConsumer = async (req, res) => {
 };
 
 // Get consumer profile
-module.exports.getConsumerProfile = async (req, res) => {
+const getConsumerProfile = async (req, res) => {
   try {
     const consumerId = req.user.id;
     const consumer = await Consumer.findById(consumerId).select('-password');
@@ -135,7 +135,7 @@ module.exports.getConsumerProfile = async (req, res) => {
 };
 
 // Update consumer preferences
-module.exports.updatePreferences = async (req, res) => {
+const updatePreferences = async (req, res) => {
   try {
     const { preferences } = req.body;
     const consumerId = req.user.id;
@@ -176,7 +176,7 @@ module.exports.updatePreferences = async (req, res) => {
 };
 
 // Update consumer profile
-module.exports.updateConsumerProfile = async (req, res) => {
+const updateConsumerProfile = async (req, res) => {
   try {
     const { fullName, email, phone, address } = req.body;
     const consumerId = req.user.id;
@@ -209,11 +209,11 @@ module.exports.updateConsumerProfile = async (req, res) => {
   }
 };
 
-// module.exports = {
-//   registerConsumer,
-//   loginConsumer,
-//   logoutConsumer,
-//   getConsumerProfile,
-//   updatePreferences,
-//   updateConsumerProfile
-// }; 
+module.exports = {
+  registerConsumer,
+  loginConsumer,
+  logoutConsumer,
+  getConsumerProfile,
+  updatePreferences,
+  updateConsumerProfile
+}; 

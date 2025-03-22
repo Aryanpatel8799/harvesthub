@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ShoppingCart, Key, Image } from "lucide-react";
+import { Edit, Trash2, ShoppingCart, Key, Image, Star, StarHalf, User, Video } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -31,6 +31,9 @@ export interface ProductCardProps {
   rentalPrice?: number;
   rentalUnit?: string;
   farmImages?: Array<{ url: string; caption: string }>;
+  farmVideos?: Array<{ url: string; caption: string }>;
+  totalOrders?: number;
+  discount?: number;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -40,6 +43,11 @@ interface ConsumerDetails {
   phone: string;
   address: string;
   deliveryInstructions?: string;
+}
+
+interface Review {
+  rating: number;
+  comment: string;
 }
 
 const ProductCard = ({
@@ -57,6 +65,9 @@ const ProductCard = ({
   rentalPrice,
   rentalUnit,
   farmImages = [],
+  farmVideos = [],
+  totalOrders = 0,
+  discount = 0,
   onEdit,
   onDelete
 }: ProductCardProps) => {
@@ -64,6 +75,8 @@ const ProductCard = ({
   const { toast } = useToast();
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [showFarmPhotosDialog, setShowFarmPhotosDialog] = useState(false);
+  const [showFarmerProfileDialog, setShowFarmerProfileDialog] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [consumerDetails, setConsumerDetails] = useState<ConsumerDetails>({
@@ -73,6 +86,10 @@ const ProductCard = ({
     deliveryInstructions: ''
   });
   const [step, setStep] = useState<'quantity' | 'details'>('quantity');
+  const [review, setReview] = useState<Review>({
+    rating: 5,
+    comment: ''
+  });
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -174,6 +191,73 @@ const ProductCard = ({
     setStep('quantity');
   };
 
+  const handleReviewSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Please login to submit a review",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${_id}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          rating: review.rating,
+          comment: review.comment
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit review');
+      }
+
+      toast({
+        title: "Success",
+        description: "Review submitted successfully!",
+      });
+
+      setShowReviewDialog(false);
+      // Reset review form
+      setReview({ rating: 5, comment: '' });
+    } catch (error) {
+      console.error('Review submission error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to submit review",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStars = (count: number) => {
+    return (
+      <div className="flex gap-1">
+        {[...Array(5)].map((_, index) => (
+          <button
+            key={index}
+            type="button"
+            onClick={() => setReview(prev => ({ ...prev, rating: index + 1 }))}
+            className={`${index < review.rating ? 'text-yellow-400' : 'text-gray-300'} hover:text-yellow-400 transition-colors`}
+          >
+            <Star className="w-6 h-6 fill-current" />
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -197,61 +281,97 @@ const ProductCard = ({
               Rental Available
             </Badge>
           )}
-          {(onEdit || onDelete) && (
-            <div className="absolute top-2 right-2 flex gap-2 z-10">
-              {onEdit && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 bg-white/80 hover:bg-white"
-                  onClick={handleEdit}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              )}
-              {onDelete && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 bg-white/80 hover:bg-white text-red-500 hover:text-red-600"
-                  onClick={handleDelete}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          )}
         </div>
+
         <CardHeader className="p-4">
-          <h3 className="font-semibold text-lg">{name}</h3>
-          <p className="text-sm text-gray-500">{farmerName}</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-semibold text-lg">{name}</h3>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <User className="h-4 w-4" />
+                <span>{farmerName}</span>
+              </div>
+            </div>
+            {(onEdit || onDelete) && (
+              <div className="flex gap-2">
+                {onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleEdit}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-500 hover:text-red-600"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </CardHeader>
+
         <CardContent className="p-4 pt-0">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-              <span className="text-2xl font-bold">₹{price.toFixed(2)}</span>
-              <span className="text-sm text-gray-500 ml-1">/{unit}</span>
+            <div className="flex flex-col">
+              {discount > 0 ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-green-600">
+                      ₹{((price * (100 - discount)) / 100).toFixed(2)}
+                    </span>
+                    <span className="text-sm text-gray-500">/{unit}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 line-through">
+                      ₹{price.toFixed(2)}
+                    </span>
+                    <span className="text-sm font-semibold text-green-600">
+                      ({discount}% off)
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">₹{price.toFixed(2)}</span>
+                  <span className="text-sm text-gray-500">/{unit}</span>
+                </div>
+              )}
             </div>
             {rental && rentalPrice && rentalUnit && (
-              <div className="text-sm text-blue-600">
+              <div className="text-sm text-blue-600 font-medium">
                 Rent: ₹{rentalPrice.toFixed(2)}/{rentalUnit}
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="text-yellow-400">★</span>
-              <span className="ml-1 text-sm">{rating.toFixed(1)}</span>
+
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-400" />
+                <span>{rating.toFixed(1)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <ShoppingCart className="h-4 w-4 text-gray-500" />
+                <span>{totalOrders} orders</span>
+              </div>
             </div>
-            <span className="text-sm text-gray-500">{location}</span>
+            <span className="text-gray-500">{location}</span>
           </div>
         </CardContent>
+
         <CardFooter className="p-4 pt-0 flex gap-2">
           {user?.type === 'consumer' && (
             <>
-              <Button 
+              <Button
                 className="flex-1" 
                 variant="default"
                 onClick={() => setShowPurchaseDialog(true)}
@@ -267,6 +387,14 @@ const ProductCard = ({
                     Buy Now
                   </>
                 )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowFarmerProfileDialog(true)}
+                className="flex-shrink-0"
+                title="View Farmer Profile"
+              >
+                <User className="w-4 h-4" />
               </Button>
               <Button
                 variant="outline"
@@ -409,7 +537,7 @@ const ProductCard = ({
               farmImages.map((image, index) => (
                 <div key={index} className="relative aspect-[4/3] group">
                   <img
-                    src={`${import.meta.env.VITE_API_URL}${image.url}`}
+                    src={`${import.meta.env.VITE_API_URL}/uploads/products${image.url}`}
                     alt={image.caption || `Farm photo ${index + 1}`}
                     className="w-full h-full object-cover rounded-lg shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
                   />
@@ -432,6 +560,155 @@ const ProductCard = ({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowFarmPhotosDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Write a Review</DialogTitle>
+            <DialogDescription>
+              Share your experience with {name} from {farmerName}'s farm
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Rating</label>
+              <div className="flex items-center gap-2">
+                {renderStars(review.rating)}
+                <span className="text-sm text-gray-500">({review.rating} of 5)</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Review</label>
+              <Textarea
+                value={review.comment}
+                onChange={(e) => setReview(prev => ({ ...prev, comment: e.target.value }))}
+                placeholder="Share your thoughts about this product..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowReviewDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReviewSubmit}
+              disabled={isSubmitting || !review.comment.trim()}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showFarmerProfileDialog} onOpenChange={setShowFarmerProfileDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Farmer Profile</DialogTitle>
+            <DialogDescription>
+              Learn more about {farmerName} and their farming practices
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-8 py-4">
+            {/* Basic Info */}
+            <div className="flex items-start gap-6 bg-gray-50 p-6 rounded-lg">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-gray-900">{farmerName}</h3>
+                <p className="text-gray-600 mt-1 flex items-center gap-2">
+                  <span className="inline-block w-4 h-4">📍</span>
+                  {location}
+                </p>
+                <div className="mt-4 flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-harvest-600" />
+                    <span className="text-gray-700 font-medium">{totalOrders} Orders</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-400" />
+                    <span className="text-gray-700 font-medium">{rating.toFixed(1)} Rating</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Farm Photos */}
+            {farmImages && farmImages.length > 0 && (
+              <div>
+                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Image className="w-5 h-5 text-harvest-600" />
+                  Farm Photos
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {farmImages.map((image, index) => (
+                    <div key={index} className="relative group rounded-lg overflow-hidden">
+                      <img
+                        src={`/uploads/products${image.url}`}
+                        alt={image.caption || `Farm photo ${index + 1}`}
+                        className="w-full aspect-video object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      {image.caption && (
+                        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
+                          <p className="text-white text-sm">{image.caption}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Farm Videos */}
+            {farmVideos && farmVideos.length > 0 && (
+              <div>
+                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Video className="w-5 h-5 text-harvest-600" />
+                  Farming Videos
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {farmVideos.map((video, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="relative rounded-lg overflow-hidden bg-gray-100">
+                        <video
+                          src={`${import.meta.env.VITE_API_URL}/uploads/products${video.url}`}
+                          controls
+                          className="w-full aspect-video"
+                          poster="/video-placeholder.jpg"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                      {video.caption && (
+                        <p className="text-gray-700 text-sm">{video.caption}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Media Message */}
+            {(!farmImages?.length && !farmVideos?.length) && (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No photos or videos available yet.</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFarmerProfileDialog(false)}>
               Close
             </Button>
           </DialogFooter>

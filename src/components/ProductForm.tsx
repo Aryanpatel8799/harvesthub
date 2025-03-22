@@ -29,6 +29,8 @@ interface EditableProduct {
   location: string;
   images: Array<{ url: string; caption: string }>;
   farmImages: Array<{ url: string; caption: string }>;
+  expiryDate?: string;
+  discount?: number;
 }
 
 const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
@@ -49,12 +51,14 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
     rental: initialData?.rental || false,
     rentalPrice: initialData?.rentalPrice || 0,
     rentalUnit: initialData?.rentalUnit || '',
-    location: initialData?.location || ''
+    location: initialData?.location || '',
+    expiryDate: initialData?.expiryDate || '',
+    discount: initialData?.discount || 0
   });
 
   const consumerCategories = ["Vegetables", "Fruits", "Grains", "Dairy", "Spices", "Herbs"];
   
-  const farmerCategories = ["Seeds", "Fertilizers", "Tools", "Equipment Rental", "Pesticides", "Irrigation"];
+  const farmerCategories = ["Vegetables", "Fruits", "Grains", "Seeds", "Fertilizers", "Tools", "Equipment Rental", "Pesticides", "Irrigation"];
 
   const categories = user?.type === 'farmer' ? farmerCategories : consumerCategories;
 
@@ -117,6 +121,36 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
     }
   };
 
+  // Calculate discount based on expiry date
+  const calculateDiscount = (expiryDate: string) => {
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    const daysUntilExpiry = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    let discount = 0;
+    if (daysUntilExpiry <= 1) {
+      discount = 50; // 50% discount if expiring in 1 day
+    } else if (daysUntilExpiry <= 3) {
+      discount = 30; // 30% discount if expiring in 2-3 days
+    } else if (daysUntilExpiry <= 7) {
+      discount = 15; // 15% discount if expiring in 4-7 days
+    }
+
+    return discount;
+  };
+
+  // Handle expiry date change
+  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newExpiryDate = e.target.value;
+    const discount = calculateDiscount(newExpiryDate);
+    
+    setFormData(prev => ({
+      ...prev,
+      expiryDate: newExpiryDate,
+      discount: discount
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -163,7 +197,9 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
         rental: false,
         rentalPrice: 0,
         rentalUnit: '',
-        location: ''
+        location: '',
+        expiryDate: '',
+        discount: 0
       });
       setImages([]);
       setFarmImages([]);
@@ -254,6 +290,24 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
           </div>
 
           <div>
+            <Label htmlFor="expiryDate">Expiry Date</Label>
+            <Input
+              id="expiryDate"
+              name="expiryDate"
+              type="date"
+              value={formData.expiryDate}
+              onChange={handleExpiryDateChange}
+              min={new Date().toISOString().split('T')[0]}
+              required
+            />
+            {formData.discount > 0 && (
+              <p className="text-sm text-green-600 mt-1">
+                Automatic discount: {formData.discount}% off
+              </p>
+            )}
+          </div>
+
+          {/* <div>
             <Label htmlFor="location">Location</Label>
             <Select
               value={formData.location}
@@ -270,7 +324,7 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
         </div>
 
         <div className="space-y-4">

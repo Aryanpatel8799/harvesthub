@@ -40,3 +40,33 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Add to your CSS */
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+.goog-te-menu-value:hover {
+  text-decoration: none !important;
+}
+
+.goog-te-gadget-icon {
+  display: none !important;
+}
+
+.goog-te-menu-value span:first-child {
+  display: none !important;
+}
+
+.goog-te-menu-frame {
+  box-shadow: none !important;
+}
+
+/* Hide Google branding */
+.VIpgJd-ZVi9od-l4eHX-hSRGPd,
+.VIpgJd-ZVi9od-ORHb-OEVmcd {
+  display: none !important;
+}
+.translated-content * {
+  white-space: normal !important;
+}

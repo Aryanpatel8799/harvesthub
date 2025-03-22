@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "proxy":"http://127.0.0.1:5000"
+    "proxy": "http://127.0.0.1:5000"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.0.0",
@@ -50,6 +50,7 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
     "firebase": "^11.4.0",
+    "google-translate-api": "^2.3.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",

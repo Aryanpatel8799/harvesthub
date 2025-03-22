@@ -2,6 +2,9 @@ const jwt = require('jsonwebtoken');
 const BlacklistToken = require('../db_models/blacklistTokenModel');
 const Farmer = require('../db_models/farmerModel');
 const Consumer = require('../db_models/consumerModel');
+const { promisify } = require('util');
+const jwtVerify = promisify(jwt.verify);
+const tokenBlacklist = new Set();
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -31,7 +34,7 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decoded = await jwtVerify(token, process.env.JWT_SECRET_KEY);
     
     if (!decoded || !decoded.id || !decoded.type) {
       console.log('Invalid token payload', decoded);
