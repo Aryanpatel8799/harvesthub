@@ -1,0 +1,180 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 120 25% 98%;
+    --foreground: 120 15% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 120 15% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 120 15% 10%;
+
+    --primary: 120 50% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 120 15% 95%;
+    --secondary-foreground: 120 40% 25%;
+
+    --muted: 120 15% 95%;
+    --muted-foreground: 120 15% 40%;
+
+    --accent: 120 15% 95%;
+    --accent-foreground: 120 40% 25%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 120 20% 88%;
+    --input: 120 20% 88%;
+    --ring: 120 50% 30%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 120 25% 98%;
+    --sidebar-foreground: 120 15% 30%;
+    --sidebar-primary: 120 50% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 120 15% 95%;
+    --sidebar-accent-foreground: 120 40% 25%;
+    --sidebar-border: 120 20% 88%;
+    --sidebar-ring: 120 50% 30%;
+  }
+
+  .dark {
+    --background: 120 15% 8%;
+    --foreground: 120 10% 95%;
+
+    --card: 120 15% 12%;
+    --card-foreground: 120 10% 95%;
+
+    --popover: 120 15% 12%;
+    --popover-foreground: 120 10% 95%;
+
+    --primary: 120 40% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 120 15% 20%;
+    --secondary-foreground: 120 10% 95%;
+
+    --muted: 120 15% 20%;
+    --muted-foreground: 120 10% 70%;
+
+    --accent: 120 15% 20%;
+    --accent-foreground: 120 10% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 120 10% 95%;
+
+    --border: 120 15% 25%;
+    --input: 120 15% 25%;
+    --ring: 120 40% 40%;
+
+    --sidebar-background: 120 15% 12%;
+    --sidebar-foreground: 120 10% 80%;
+    --sidebar-primary: 120 40% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 120 15% 20%;
+    --sidebar-accent-foreground: 120 10% 95%;
+    --sidebar-border: 120 15% 25%;
+    --sidebar-ring: 120 40% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv02" on;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-md backdrop-saturate-150 border border-white/20;
+  }
+  
+  .hover-card-effect {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  .button-primary {
+    @apply bg-harvest-600 hover:bg-harvest-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+  }
+
+  .button-secondary {
+    @apply bg-white hover:bg-gray-50 text-harvest-700 font-medium py-2 px-4 rounded-md border border-harvest-300 transition-colors duration-200;
+  }
+
+  .input-field {
+    @apply bg-white border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-harvest-500 focus:border-transparent transition-all duration-200;
+  }
+
+  .card-base {
+    @apply bg-white rounded-lg p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1d9c1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a6c3a6;
+}
+
+/* Loading animation */
+.loading-dots div {
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.loading-dots div:nth-child(1) {
+  animation: scaling 0.6s infinite;
+}
+
+.loading-dots div:nth-child(2) {
+  animation: scaling 0.6s infinite 0.2s;
+}
+
+.loading-dots div:nth-child(3) {
+  animation: scaling 0.6s infinite 0.4s;
+}
+
+@keyframes scaling {
+  0%, 100% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
