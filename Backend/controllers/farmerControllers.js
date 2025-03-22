@@ -4,8 +4,10 @@ const Farmer = require('../db_models/farmerModel');
 const jwt = require('jsonwebtoken');
 const BlacklistToken = require('../db_models/blacklistTokenModel');
 const bcrypt = require('bcrypt');
+const Order = require('../db_models/Order');
+const Review = require('../db_models/Review');
 
-module.exports.registerFarmer = async (req, res) => {
+const registerFarmer = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
         
@@ -48,7 +50,7 @@ module.exports.registerFarmer = async (req, res) => {
     }
 };
 
-module.exports.loginFarmer = async (req, res) => {
+const loginFarmer = async (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -91,7 +93,7 @@ module.exports.loginFarmer = async (req, res) => {
     }
 };
 
-module.exports.logoutFarmer = async (req, res) => {
+const logoutFarmer = async (req, res) => {
     try {
         const token = req.cookies.token;
         
@@ -113,7 +115,7 @@ module.exports.logoutFarmer = async (req, res) => {
     }
 };
 
-module.exports.getFarmerProfile = async (req, res) => {
+const getFarmerProfile = async (req, res) => {
     try {
         const farmerId = req.user.id;
         const farmer = await Farmer.findById(farmerId).select('-password');
@@ -131,80 +133,56 @@ module.exports.getFarmerProfile = async (req, res) => {
     }
 };
 
-module.exports.updateFarmerProfile = async (req, res) => {
+const updateFarmerProfile = async (req, res) => {
     try {
-        const { fullName, email, phone, address, location, description, farmSize, cropTypes } = req.body;
-        const farmerId = req.user.id;
+        const baseUrl = process.env.SERVER_URL || 'http://localhost:5000';
+        const updates = { ...req.body };
 
-        // Find the farmer
-        const farmer = await Farmer.findById(farmerId);
+        // Handle farm images
+        if (req.files && req.files.farmImages) {
+            const farmImages = req.files.farmImages.map(file => ({
+                url: `${baseUrl}/uploads/${file.filename}`,
+                caption: ''
+            }));
+            updates.farmImages = farmImages;
+        }
+
+        // Handle farm videos
+        if (req.files && req.files.farmVideos) {
+            const farmVideos = req.files.farmVideos.map(file => ({
+                url: `${baseUrl}/uploads/${file.filename}`,
+                caption: ''
+            }));
+            updates.farmVideos = farmVideos;
+        }
+
+        const farmer = await Farmer.findByIdAndUpdate(
+            req.user.id,
+            { $set: updates },
+            { new: true, runValidators: true }
+        );
+
         if (!farmer) {
-            return res.status(404).json({ message: 'Farmer not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Farmer not found'
+            });
         }
 
-        // Update fields if provided
-        if (fullName) farmer.fullName = fullName;
-        if (email) farmer.email = email;
-        if (phone) farmer.phone = phone;
-        if (address) farmer.address = address;
-        if (location) farmer.location = location;
-        if (description) farmer.description = description;
-        if (farmSize) farmer.farmSize = farmSize;
-        if (cropTypes) farmer.cropTypes = cropTypes;
-
-        // Handle farm media uploads
-        if (req.files) {
-            const apiUrl = process.env.API_URL || 'http://localhost:8000';
-
-            // Handle farm images
-            if (req.files.farmImages) {
-                const images = Array.isArray(req.files.farmImages) ? req.files.farmImages : [req.files.farmImages];
-                const imageCaptions = req.body.imageCaptions ? 
-                    (Array.isArray(req.body.imageCaptions) ? req.body.imageCaptions : [req.body.imageCaptions]) 
-                    : images.map(() => '');
-
-                const farmImages = images.map((file, index) => ({
-                    url: `${apiUrl}/uploads/${file.filename}`,
-                    caption: imageCaptions[index] || ''
-                }));
-
-                farmer.farmImages = [...(farmer.farmImages || []), ...farmImages];
-            }
-
-            // Handle farm videos
-            if (req.files.farmVideos) {
-                const videos = Array.isArray(req.files.farmVideos) ? req.files.farmVideos : [req.files.farmVideos];
-                const videoCaptions = req.body.videoCaptions ?
-                    (Array.isArray(req.body.videoCaptions) ? req.body.videoCaptions : [req.body.videoCaptions])
-                    : videos.map(() => '');
-
-                const farmVideos = videos.map((file, index) => ({
-                    url: `${apiUrl}/uploads/${file.filename}`,
-                    caption: videoCaptions[index] || ''
-                }));
-
-                farmer.farmVideos = [...(farmer.farmVideos || []), ...farmVideos];
-            }
-        }
-
-        // Save updated farmer
-        await farmer.save();
-
-        // Return updated farmer data
-        const farmerData = farmer.toPublicProfile();
-        
         res.status(200).json({
-            message: 'Farmer profile updated successfully',
-            user: farmerData
+            success: true,
+            data: farmer
         });
     } catch (error) {
         console.error('Error updating farmer profile:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Error updating farmer profile'
+        });
     }
 };
 
-// Add a new endpoint to get farmer's total orders
-module.exports.getFarmerTotalOrders = async (req, res) => {
+const getFarmerTotalOrders = async (req, res) => {
     try {
         const farmerId = req.user.id;
         const farmer = await Farmer.findById(farmerId).select('totalOrders');
@@ -220,8 +198,7 @@ module.exports.getFarmerTotalOrders = async (req, res) => {
     }
 };
 
-// Add a new endpoint to increment total orders
-module.exports.incrementTotalOrders = async (farmerId) => {
+const incrementTotalOrders = async (farmerId) => {
     try {
         const farmer = await Farmer.findById(farmerId);
         if (farmer) {
@@ -233,10 +210,41 @@ module.exports.incrementTotalOrders = async (farmerId) => {
     }
 };
 
-// module.exports = {
-//   registerFarmer,
-//   loginFarmer,
-//   logoutFarmer,
-//   getFarmerProfile,
-//   updateFarmerProfile
-// };
+const getFarmerDetails = async (req, res) => {
+    try {
+        const farmerId = req.params.id;
+        const farmer = await Farmer.findById(farmerId).select('-password');
+
+        if (!farmer) {
+            return res.status(404).json({ message: 'Farmer not found' });
+        }
+
+        // Get average rating from reviews
+        const reviews = await Review.find({ farmer: farmer._id });
+        const rating = reviews.length > 0
+            ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+            : 0;
+
+        // Combine farmer data with calculated fields
+        const farmerData = {
+            ...farmer.toObject(),
+            rating
+        };
+
+        res.json({ farmer: farmerData });
+    } catch (error) {
+        console.error('Error fetching farmer details:', error);
+        res.status(500).json({ message: 'Error fetching farmer details' });
+    }
+};
+
+module.exports = {
+    registerFarmer,
+    loginFarmer,
+    logoutFarmer,
+    getFarmerProfile,
+    updateFarmerProfile,
+    getFarmerTotalOrders,
+    incrementTotalOrders,
+    getFarmerDetails
+};

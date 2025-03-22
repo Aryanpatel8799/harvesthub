@@ -100,5 +100,8 @@ router.get('/total-orders', auth, async (req, res, next) => {
     }
 });
 
+// Get farmer details by ID (public route)
+router.get('/:id', farmerController.getFarmerDetails);
+
 module.exports = router;
 

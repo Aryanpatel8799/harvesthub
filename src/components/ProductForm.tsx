@@ -31,6 +31,7 @@ interface EditableProduct {
   farmImages: Array<{ url: string; caption: string }>;
   expiryDate?: string;
   discount?: number;
+  discountedPrice?: number;
 }
 
 const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
@@ -53,7 +54,8 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
     rentalUnit: initialData?.rentalUnit || '',
     location: initialData?.location || '',
     expiryDate: initialData?.expiryDate || '',
-    discount: initialData?.discount || 0
+    discount: initialData?.discount || 0,
+    discountedPrice: initialData?.discountedPrice || 0
   });
 
   const consumerCategories = ["Vegetables", "Fruits", "Grains", "Dairy", "Spices", "Herbs"];
@@ -66,21 +68,58 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
 
   useEffect(() => {
     if (initialData) {
-      setPreviewImages(initialData.images.map(img => 
-        img.url.startsWith('http') ? img.url : `${import.meta.env.VITE_API_URL}${img.url}`
-      ));
-      setPreviewFarmImages(initialData.farmImages.map(img => 
-        img.url.startsWith('http') ? img.url : `${import.meta.env.VITE_API_URL}${img.url}`
-      ));
+      setPreviewImages(initialData.images.map(img => {
+        const url = img.url;
+        if (url.startsWith('http')) return url;
+        return `${import.meta.env.VITE_API_URL}${url}`;
+      }));
+      setPreviewFarmImages(initialData.farmImages.map(img => {
+        const url = img.url;
+        if (url.startsWith('http')) return url;
+        return `${import.meta.env.VITE_API_URL}${url}`;
+      }));
     }
   }, [initialData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? Number(value) : value
-    }));
+    setFormData(prev => {
+      const newValue = type === 'number' ? Number(value) : value;
+      const newState = { ...prev, [name]: newValue };
+      
+      // If price is being changed, recalculate discounted price
+      if (name === 'price') {
+        const price = Number(value);
+        const discount = prev.discount || 0;
+        const discountedPrice = price * (1 - (discount / 100));
+        return { ...newState, discountedPrice };
+      }
+      return newState;
+    });
+  };
+
+  // Define categories that can be rented (equipment-related categories)
+  const rentableCategories = ["Tools", "Equipment Rental", "Irrigation"];
+  
+  // Define categories that can be organic
+  const organicCategories = ["Vegetables", "Fruits", "Grains", "Dairy", "Spices", "Herbs"];
+
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setFormData(prev => {
+      const isRentableCategory = rentableCategories.includes(value);
+      const isOrganicCategory = organicCategories.includes(value);
+      return {
+        ...prev,
+        category: value,
+        // Automatically enable rental for equipment categories
+        rental: isRentableCategory ? true : false,
+        rentalPrice: isRentableCategory ? prev.rentalPrice || 0 : 0,
+        rentalUnit: isRentableCategory ? prev.rentalUnit || 'day' : '',
+        // Only allow organic for food categories
+        organic: isOrganicCategory ? prev.organic : false
+      };
+    });
   };
 
   const handleSwitchChange = (name: string, checked: boolean) => {
@@ -143,11 +182,13 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
   const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newExpiryDate = e.target.value;
     const discount = calculateDiscount(newExpiryDate);
+    const discountedPrice = formData.price * (1 - (discount / 100));
     
     setFormData(prev => ({
       ...prev,
       expiryDate: newExpiryDate,
-      discount: discount
+      discount: discount,
+      discountedPrice: discountedPrice
     }));
   };
 
@@ -199,7 +240,8 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
         rentalUnit: '',
         location: '',
         expiryDate: '',
-        discount: 0
+        discount: 0,
+        discountedPrice: 0
       });
       setImages([]);
       setFarmImages([]);
@@ -256,6 +298,19 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               min="0"
               step="0.01"
             />
+            {formData.discount > 0 && (
+              <div className="mt-2 space-y-1">
+                <p className="text-sm text-gray-500 line-through">
+                  Original Price: ₹{formData.price.toFixed(2)}
+                </p>
+                <p className="text-sm font-semibold text-green-600">
+                  Discounted Price: ₹{formData.discountedPrice.toFixed(2)}
+                </p>
+                <p className="text-xs text-green-600">
+                  Savings: ₹{(formData.price - formData.discountedPrice).toFixed(2)} ({formData.discount}% off)
+                </p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -274,7 +329,7 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
             <Label htmlFor="category">Category</Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              onValueChange={handleCategoryChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
@@ -301,9 +356,14 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               required
             />
             {formData.discount > 0 && (
-              <p className="text-sm text-green-600 mt-1">
-                Automatic discount: {formData.discount}% off
-              </p>
+              <div className="mt-1">
+                <p className="text-sm text-green-600">
+                  Automatic discount: {formData.discount}% off
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formData.expiryDate && `Expires on ${new Date(formData.expiryDate).toLocaleDateString()}`}
+                </p>
+              </div>
             )}
           </div>
 
@@ -333,8 +393,14 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               id="organic"
               checked={formData.organic}
               onCheckedChange={(checked) => handleSwitchChange('organic', checked)}
+              disabled={!organicCategories.includes(formData.category)}
             />
-            <Label htmlFor="organic">Organic Product</Label>
+            <Label htmlFor="organic">
+              Organic Product
+              {!organicCategories.includes(formData.category) && (
+                <span className="ml-2 text-sm text-gray-500">(Only food items can be organic)</span>
+              )}
+            </Label>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -342,8 +408,14 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               id="rental"
               checked={formData.rental}
               onCheckedChange={(checked) => handleSwitchChange('rental', checked)}
+              disabled={!rentableCategories.includes(formData.category)}
             />
-            <Label htmlFor="rental">Available for Rental</Label>
+            <Label htmlFor="rental">
+              Available for Rental
+              {!rentableCategories.includes(formData.category) && (
+                <span className="ml-2 text-sm text-gray-500">(Only equipment items can be rented)</span>
+              )}
+            </Label>
           </div>
 
           {formData.rental && (
@@ -380,7 +452,7 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               {previewImages.map((url, index) => (
                 <div key={index} className="relative group">
                   <img
-                    src={url}
+                    src={url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`}
                     alt={`Product ${index + 1}`}
                     className="w-full h-32 object-cover rounded-md"
                   />
@@ -414,7 +486,7 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               {previewFarmImages.map((url, index) => (
                 <div key={index} className="relative group">
                   <img
-                    src={url}
+                    src={url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`}
                     alt={`Farm ${index + 1}`}
                     className="w-full h-32 object-cover rounded-md"
                   />

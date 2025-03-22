@@ -5,7 +5,8 @@ const {
   createOrder,
   getConsumerOrders,
   getFarmerOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  getOrderById
 } = require('../controllers/orderController');
 
 // Consumer routes
@@ -15,5 +16,8 @@ router.get('/consumer', auth, consumerOnly, getConsumerOrders);
 // Farmer routes
 router.get('/farmer', auth, farmerOnly, getFarmerOrders);
 router.put('/:orderId/status', auth, farmerOnly, updateOrderStatus);
+
+// Get a single order by ID - accessible by the order owner (consumer) or the farmer
+router.get('/:id', auth, getOrderById);
 
 module.exports = router; 

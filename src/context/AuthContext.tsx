@@ -1,21 +1,19 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
-interface User {
+export interface User {
   _id: string;
   fullName: string;
   email: string;
-  phone?: string;
-  address?: string;
-  farmSize?: string;
-  cropTypes?: string;
-  avatar?: string;
   type: 'farmer' | 'consumer' | 'admin';
   location?: string;
   description?: string;
   farmImages?: Array<{ url: string; caption: string }>;
   farmVideos?: Array<{ url: string; caption: string }>;
   totalOrders?: number;
+  rating?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {
@@ -24,6 +22,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string, type: 'farmer' | 'consumer' | 'admin') => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -121,13 +120,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateProfile = async (data: Partial<User>) => {
+    if (!user) throw new Error('No user logged in');
+
+    try {
+      const endpoint = user.type === 'admin' 
+        ? 'admin/profile' 
+        : user.type === 'farmer' 
+          ? 'farmers/profile' 
+          : 'consumers/profile';
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/${endpoint}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Profile update failed');
+      }
+
+      const responseData = await response.json();
+      setUser(responseData.user);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
       isAuthenticated: !!user,
       loading,
       login,
-      logout
+      logout,
+      updateProfile
     }}>
       {children}
     </AuthContext.Provider>

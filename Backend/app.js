@@ -17,6 +17,7 @@ const productRoutes = require('./Routes/productRoutes');
 const orderRoutes = require('./Routes/orderRoutes');
 const farmImageRoutes = require('./Routes/farmImageRoutes');
 const reviewRoutes = require('./Routes/reviewRoutes');
+const paymentRoutes = require('./Routes/paymentRoutes');
 
 // Import middleware and models
 const { auth } = require('./Middleware/authMiddleware');
@@ -25,8 +26,15 @@ const { Farmer, Consumer } = require('./db_models');
 // Initialize express app
 const app = express();
 
-// Middleware
-app.use(express.json());
+// Middleware for all routes except Stripe webhook
+app.use((req, res, next) => {
+    if (req.originalUrl === '/api/payments/webhook') {
+        next();
+    } else {
+        express.json()(req, res, next);
+    }
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -48,7 +56,7 @@ app.use(cors({
     origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Stripe-Signature']
 }));
 
 // Create uploads directory if it doesn't exist
@@ -67,6 +75,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/farm-images', farmImageRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Test route
 app.get('/', (req, res) => {
