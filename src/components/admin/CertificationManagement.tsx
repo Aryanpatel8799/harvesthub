@@ -19,16 +19,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+interface SoilComponent {
+  name: string;
+  value: number;
+  unit: string;
+  isNatural: boolean;
+}
+
 interface Certification {
   _id: string;
   farmer: {
-    name: string;
+    fullName: string;
     email: string;
-    phone: string;
+    phone?: string;
   };
-  certificateUrl: string;
+  farmName: string;
+  certificateFile: string;
+  components: SoilComponent[];
   status: string;
   createdAt: string;
+  rejectionReason?: string;
 }
 
 const CertificationManagement = () => {
@@ -47,21 +57,49 @@ const CertificationManagement = () => {
 
   const fetchCertifications = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/certifications/pending`, {
-        credentials: 'include'
+      setLoading(true);
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/soil/certifications/pending`;
+      console.log('Fetching certifications from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', [...response.headers.entries()].reduce((obj, [key, value]) => {
+        obj[key] = value;
+        return obj;
+      }, {}));
+
       if (!response.ok) {
-        throw new Error('Failed to fetch certifications');
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        } catch (e) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
 
       const data = await response.json();
+      console.log('Received certifications data:', data);
+
+      if (!Array.isArray(data)) {
+        console.error('Expected array of certifications but got:', typeof data);
+        throw new Error('Invalid data format received from server');
+      }
+
       setCertifications(data);
     } catch (error) {
-      console.error('Fetch certifications error:', error);
+      console.error('Error fetching certifications:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch pending certifications',
+        description: error instanceof Error ? error.message : 'Failed to fetch pending certifications',
         variant: 'destructive'
       });
     } finally {
@@ -74,43 +112,58 @@ const CertificationManagement = () => {
 
     try {
       setIsSubmitting(true);
+      console.log('Updating certification status:', {
+        certificationId: selectedCert._id,
+        status,
+        rejectionReason
+      });
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/admin/certifications/${selectedCert._id}`,
+        `${import.meta.env.VITE_API_URL}/api/soil/certifications/${selectedCert._id}`,
         {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
-          credentials: 'include',
           body: JSON.stringify({
             status,
-            ...(status === 'rejected' && { rejectionReason })
-          })
+            rejectionReason: status === 'rejected' ? rejectionReason : '',
+          }),
+          credentials: 'include',
         }
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update certification status');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Status update error:', response.status, errorData);
+        throw new Error(`Failed to update status: ${response.status}`);
       }
 
       toast({
         title: 'Success',
-        description: 'Certification status updated successfully'
+        description: `Certification ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
       });
 
-      setShowDialog(false);
+      // Refresh the list
       fetchCertifications();
+      setShowDialog(false);
+      setRejectionReason('');
     } catch (error) {
-      console.error('Update certification error:', error);
+      console.error('Status update error:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update certification status',
-        variant: 'destructive'
+        description: 'Failed to update certification status',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const formatComponentValue = (components: SoilComponent[], type: string) => {
+    const component = components.find(c => c.name.toLowerCase().includes(type.toLowerCase()));
+    if (!component) return 'N/A';
+    return `${component.value} ${component.unit}`;
   };
 
   if (loading) {
@@ -121,40 +174,86 @@ const CertificationManagement = () => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Certification Management</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {certifications.map((cert) => (
-          <Card key={cert._id} className="p-4 space-y-4">
-            <div>
-              <h3 className="font-medium">{cert.farmer.name}</h3>
-              <p className="text-sm text-gray-500">{cert.farmer.email}</p>
-              <p className="text-sm text-gray-500">{cert.farmer.phone}</p>
-            </div>
-
-            <div className="space-y-2">
-              <img
-                src={cert.certificateUrl}
-                alt="Soil Certificate"
-                className="w-full h-40 object-cover rounded"
-              />
-              <p className="text-sm text-gray-500">
-                Submitted on: {new Date(cert.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-
-            <Button
-              className="w-full"
-              onClick={() => {
-                setSelectedCert(cert);
-                setShowDialog(true);
-                setStatus('approved');
-                setRejectionReason('');
-              }}
-            >
-              Review Certificate
-            </Button>
-          </Card>
-        ))}
-      </div>
+      {certifications && certifications.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {certifications.map((cert) => (
+            <Card key={cert._id} className="overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+              <div className="flex flex-col h-full">
+                <div className="p-5 flex-grow">
+                  <h3 className="text-xl font-medium mb-1">
+                    {cert.farmName}
+                  </h3>
+                  <p className="text-gray-500 mb-1">{cert.farmer?.email || 'No email'}</p>
+                  <p className="text-gray-500 mb-4">
+                    {cert.farmer?.phone ? `Phone: ${cert.farmer.phone}` : 'No phone provided'}
+                  </p>
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <p className="text-sm">
+                        <span className="font-medium">Soil Type:</span><br/>
+                        {formatComponentValue(cert.components, 'soil type')}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">pH Level:</span><br/>
+                        {formatComponentValue(cert.components, 'ph')}
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2">
+                      <p className="text-sm">
+                        <span className="font-medium">N:</span><br/>
+                        {formatComponentValue(cert.components, 'nitrogen')}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">P:</span><br/>
+                        {formatComponentValue(cert.components, 'phosphorus')}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">K:</span><br/>
+                        {formatComponentValue(cert.components, 'potassium')}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {cert.certificateFile && (
+                    <div className="mb-4 border rounded overflow-hidden">
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}/uploads/certificates/${cert.certificateFile}`}
+                        alt="Soil Certificate"
+                        className="w-full h-40 object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-gray-500">
+                    Submitted: {new Date(cert.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                
+                <div className="p-4 pt-0">
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedCert(cert);
+                      setShowDialog(true);
+                      setStatus('approved');
+                      setRejectionReason('');
+                    }}
+                  >
+                    Review Certificate
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-xl font-medium text-gray-600">No pending certifications found</p>
+          <p className="text-gray-500 mt-2">All certifications have been reviewed</p>
+        </div>
+      )}
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-[500px]">

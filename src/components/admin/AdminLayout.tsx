@@ -50,11 +50,11 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       icon: <LayoutDashboard className="w-5 h-5" />,
       label: 'Dashboard'
     },
-    {
-      to: '/admin/certifications',
-      icon: <FileCheck className="w-5 h-5" />,
-      label: 'Certifications'
-    }
+    // {
+    //   to: '/admin/certifications',
+    //   icon: <FileCheck className="w-5 h-5" />,
+    //   label: 'Certifications'
+    // }
   ];
 
   return (

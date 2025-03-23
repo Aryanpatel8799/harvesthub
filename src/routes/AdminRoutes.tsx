@@ -25,6 +25,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AdminRoutes = () => {
   const { user } = useAuth();
 
+  // If user is already logged in as admin and tries to access login page, redirect to dashboard
+  if (user?.type === 'admin' && window.location.pathname === '/admin/login') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
   // If user is logged in but not as admin, redirect to main dashboard
   if (user && user.type !== 'admin') {
     return <Navigate to="/dashboard" replace />;
@@ -49,6 +54,8 @@ const AdminRoutes = () => {
           </ProtectedRoute>
         }
       />
+      {/* Redirect root admin path to dashboard */}
+      <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
     </Routes>
   );

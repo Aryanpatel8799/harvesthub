@@ -10,14 +10,20 @@ const session = require('express-session');
 // Import models
 require('./db_models');
 
-// Import routes
+// Import routes that actually exist
+const userRoutes = require('./Routes/userRoutes');
 const farmerRoutes = require('./Routes/farmerRoutes');
 const consumerRoutes = require('./Routes/consumerRoutes');
 const productRoutes = require('./Routes/productRoutes');
+const adminRoutes = require('./Routes/adminRoutes');
+const soilDetailsRoutes = require('./Routes/soilDetailsRoutes');
+const soilCertificationRoutes = require('./Routes/soilCertificationRoutes');
 const orderRoutes = require('./Routes/orderRoutes');
 const farmImageRoutes = require('./Routes/farmImageRoutes');
-const reviewRoutes = require('./Routes/reviewRoutes');
+const marketDataRoutes = require('./Routes/marketDataRoutes');
 const paymentRoutes = require('./Routes/paymentRoutes');
+const reviewRoutes = require('./Routes/reviewRoutes');
+const translationRoutes = require('./Routes/translationRoutes');
 
 // Import middleware and models
 const { auth } = require('./Middleware/authMiddleware');
@@ -51,60 +57,146 @@ app.use(session({
     }
 }));
 
-// CORS configuration
+// CORS middleware
 app.use(cors({
-    origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000'],
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            process.env.CLIENT_URL || 'http://localhost:5173',
+            'http://localhost:5173',
+            'http://127.0.0.1:5173'
+        ];
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            console.log('CORS blocked for origin:', origin);
+            console.log('Allowed origins:', allowedOrigins);
+        }
+        
+        // Allow all origins in development mode
+        const isAllowed = process.env.NODE_ENV !== 'production' || allowedOrigins.indexOf(origin) !== -1;
+        callback(null, isAllowed);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Stripe-Signature']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    optionsSuccessStatus: 200
 }));
 
-// Create uploads directory if it doesn't exist
+// Create uploads directories if they don't exist
 const uploadsDir = path.join(__dirname, 'uploads');
+const certificatesDir = path.join(uploadsDir, 'certificates');
+
 if (!fs.existsSync(uploadsDir)) {
+    console.log('Creating uploads directory:', uploadsDir);
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+if (!fs.existsSync(certificatesDir)) {
+    console.log('Creating certificates directory:', certificatesDir);
+    fs.mkdirSync(certificatesDir, { recursive: true });
+}
+
+console.log('Upload directories:');
+console.log('- Main:', fs.existsSync(uploadsDir) ? 'exists' : 'missing');
+console.log('- Certificates:', fs.existsSync(certificatesDir) ? 'exists' : 'missing');
+
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+console.log('Serving static files from:', path.join(__dirname, 'uploads'));
+
+// Debug route for file uploads
+app.get('/api/debug/uploads', (req, res) => {
+    try {
+        const mainExists = fs.existsSync(uploadsDir);
+        const certExists = fs.existsSync(certificatesDir);
+        
+        let files = [];
+        if (certExists) {
+            files = fs.readdirSync(certificatesDir).slice(0, 10); // List first 10 files
+        }
+        
+        res.json({
+            uploadsDir: uploadsDir,
+            certificatesDir: certificatesDir,
+            dirStatus: {
+                main: mainExists ? 'exists' : 'missing',
+                certificates: certExists ? 'exists' : 'missing'
+            },
+            files: files,
+            message: 'If directories are missing, they will be created on demand'
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
+// Debug route for direct file upload testing
+app.post('/api/debug/file-upload', (req, res) => {
+    try {
+        const multer = require('multer');
+        const storage = multer.diskStorage({
+            destination: function(req, file, cb) {
+                cb(null, 'uploads/debug');
+            },
+            filename: function(req, file, cb) {
+                cb(null, Date.now() + '-' + file.originalname);
+            }
+        });
+        
+        // Create debug directory if it doesn't exist
+        const debugDir = path.join(__dirname, 'uploads/debug');
+        if (!fs.existsSync(debugDir)) {
+            fs.mkdirSync(debugDir, { recursive: true });
+        }
+        
+        const upload = multer({ storage: storage }).single('testFile');
+        
+        upload(req, res, function(err) {
+            if (err) {
+                return res.status(400).json({ error: err.message });
+            }
+            
+            console.log('Debug file upload received:', req.file);
+            console.log('Debug form data:', req.body);
+            
+            res.json({
+                message: 'File uploaded successfully',
+                file: req.file,
+                body: req.body
+            });
+        });
+    } catch (error) {
+        console.error('Debug file upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Routes
+console.log('Mounting routes...');
+app.use('/api/auth', userRoutes);
 app.use('/api/farmers', farmerRoutes);
 app.use('/api/consumers', consumerRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/soil', soilDetailsRoutes);
+app.use('/api/soil', soilCertificationRoutes);
+console.log('Soil certification routes mounted at: /api/soil');
+
 app.use('/api/orders', orderRoutes);
 app.use('/api/farm-images', farmImageRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/market-data', marketDataRoutes);
+app.use('/api/translations', translationRoutes);
 
 // Test route
 app.get('/', (req, res) => {
     res.json({ message: 'API is running' });
-});
-
-// Check auth endpoint
-app.get('/api/check-auth', auth, async (req, res, next) => {
-    try {
-        const userType = req.user.type;
-        
-        if (userType === 'farmer') {
-            const farmer = await Farmer.findById(req.user.id).select('-password');
-            if (!farmer) {
-                return res.status(404).json({ message: 'Farmer not found' });
-            }
-            res.json({ user: farmer.toPublicProfile() });
-        } else if (userType === 'consumer') {
-            const consumer = await Consumer.findById(req.user.id).select('-password');
-            if (!consumer) {
-                return res.status(404).json({ message: 'Consumer not found' });
-            }
-            res.json({ user: consumer.toPublicProfile() });
-        } else {
-            res.status(401).json({ message: 'Invalid user type' });
-        }
-    } catch (error) {
-        next(error);
-    }
 });
 
 // Error handling middleware
