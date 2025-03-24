@@ -245,7 +245,7 @@ const Dashboard = () => {
             <Users className="h-8 w-8 text-blue-500" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Farmers</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.totalFarmers || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">1</p>
             </div>
           </div>
         </Card>
@@ -254,7 +254,7 @@ const Dashboard = () => {
             <ShoppingBag className="h-8 w-8 text-green-500" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Consumers</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.totalConsumers || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">1</p>
             </div>
           </div>
         </Card>

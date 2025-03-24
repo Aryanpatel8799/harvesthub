@@ -313,32 +313,32 @@ const Marketplace = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Hero section */}
-        <div className="py-8 md:py-12">
-          <div className="flex justify-between items-center mb-8">
+        <div className="py-6 sm:py-8 md:py-12">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
                 {user?.type === 'farmer' 
                   ? 'Farm Supplies & Equipment Marketplace' 
                   : 'Fresh Farm Produce Marketplace'}
               </h1>
-              <p className="text-lg text-gray-600 max-w-3xl">
+              <p className="text-base sm:text-lg text-gray-600 max-w-3xl">
                 {user?.type === 'farmer'
                   ? 'Browse and purchase high-quality farming supplies, rent equipment, and find everything you need for successful farming.'
                   : 'Browse and purchase fresh, high-quality produce directly from local farmers. Support sustainable agriculture and enjoy farm-to-table freshness.'}
               </p>
             </div>
             {user?.type === 'farmer' && (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => setShowFarmerProfileForm(true)}
-                  className="flex items-center px-4 py-2 bg-white border border-harvest-600 text-harvest-600 rounded-md hover:bg-harvest-50 transition-colors"
+                  className="flex items-center justify-center px-4 py-2 bg-white border border-harvest-600 text-harvest-600 rounded-md hover:bg-harvest-50 transition-colors"
                 >
                   <User className="w-5 h-5 mr-2" />
                   My Profile
                 </button>
                 <button
                   onClick={() => setShowProductForm(true)}
-                  className="flex items-center px-4 py-2 bg-harvest-600 text-white rounded-md hover:bg-harvest-700 transition-colors"
+                  className="flex items-center justify-center px-4 py-2 bg-harvest-600 text-white rounded-md hover:bg-harvest-700 transition-colors"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Add Product
@@ -348,14 +348,14 @@ const Marketplace = () => {
           </div>
 
           {/* Search and filter */}
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <div className="flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
-                className="input-field pl-10 w-full"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:border-harvest-600 focus:ring-2 focus:ring-harvest-100"
                 placeholder={user?.type === 'farmer' 
                   ? "Search for supplies, equipment or rentals..." 
                   : "Search for products, farmers or locations..."}
@@ -364,7 +364,7 @@ const Marketplace = () => {
               />
             </div>
             <button
-              className="md:w-auto flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-5 w-5 mr-2" />
@@ -408,7 +408,7 @@ const Marketplace = () => {
                       name="minPrice"
                       value={filters.minPrice}
                       onChange={handleFilterChange}
-                      className="input-field w-full"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-harvest-500"
                       placeholder="Min"
                     />
                     <span className="text-gray-500">to</span>
@@ -417,7 +417,7 @@ const Marketplace = () => {
                       name="maxPrice"
                       value={filters.maxPrice}
                       onChange={handleFilterChange}
-                      className="input-field w-full"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-harvest-500"
                       placeholder="Max"
                     />
                   </div>
@@ -448,16 +448,16 @@ const Marketplace = () => {
                 </div>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end gap-2">
                 <button
                   onClick={handleResetFilters}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm mr-2"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
                 >
                   Reset
                 </button>
                 <button
                   onClick={() => setShowFilters(false)}
-                  className="bg-harvest-600 hover:bg-harvest-700 text-white px-4 py-2 rounded-md text-sm"
+                  className="px-4 py-2 text-sm font-medium text-white bg-harvest-600 hover:bg-harvest-700 rounded-md"
                 >
                   Apply Filters
                 </button>
@@ -466,13 +466,13 @@ const Marketplace = () => {
           )}
 
           {/* Product sorting */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <div className="text-sm text-gray-500 mb-4 sm:mb-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="text-sm text-gray-500">
               Showing {products.length} products
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center w-full sm:w-auto">
               <span className="text-sm text-gray-600 mr-2">Sort by:</span>
-              <select className="input-field text-sm py-1">
+              <select className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-harvest-500 text-sm">
                 <option>Newest</option>
                 <option>Price: Low to High</option>
                 <option>Price: High to Low</option>
@@ -483,7 +483,7 @@ const Marketplace = () => {
 
           {/* Products grid */}
           <div className="relative">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {products.map((product) => {
                 // Only render if we have all required data
                 if (!product?.farmer?._id) return null;
@@ -675,7 +675,7 @@ const Marketplace = () => {
                   name="minPrice"
                   value={filters.minPrice}
                   onChange={handleFilterChange}
-                  className="input-field w-full"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-harvest-500"
                   placeholder="Min"
                 />
                 <span className="text-gray-500">to</span>
@@ -684,7 +684,7 @@ const Marketplace = () => {
                   name="maxPrice"
                   value={filters.maxPrice}
                   onChange={handleFilterChange}
-                  className="input-field w-full"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-harvest-500"
                   placeholder="Max"
                 />
               </div>
