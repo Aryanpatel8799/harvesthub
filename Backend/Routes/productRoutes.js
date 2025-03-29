@@ -7,7 +7,7 @@ const {
   updateProduct, 
   deleteProduct,
   addReview 
-} = require('../Controllers/productController');
+} = require('../controllers/productController');
 const { auth, farmerOnly } = require('../Middleware/authMiddleware');
 const { uploadMiddleware, processUpload } = require('../Middleware/uploadMiddleware');
 

@@ -83,6 +83,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     optionsSuccessStatus: 200
 }));
+// methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
 
 // Create uploads directories if they don't exist
 const uploadsDir = path.join(__dirname, 'uploads');
