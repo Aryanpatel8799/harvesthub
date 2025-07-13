@@ -1,8 +1,12 @@
 // Script to update backend CORS for Vercel deployment
 // Run this after you get your Vercel domain
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const backendAppPath = path.join(__dirname, 'Backend', 'app.js');
 
@@ -13,7 +17,7 @@ console.log('');
 let appContent = fs.readFileSync(backendAppPath, 'utf8');
 
 // Add your Vercel domain here (replace with your actual domain)
-const vercelDomain = 'https://harvesthub-xxxxx.vercel.app'; // Replace with your actual Vercel domain
+const vercelDomain = 'https://harvesthub-bqv1-80hc6psly-aryan-patels-projects-e6951771.vercel.app'; // Replace with your actual Vercel domain
 
 // Find the allowedOrigins array and add the Vercel domain
 const corsPattern = /const allowedOrigins = \[([\s\S]*?)\];/;
