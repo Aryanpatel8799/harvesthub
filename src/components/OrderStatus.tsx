@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE_URL } from "@/config/api";
 import {
   Select,
   SelectContent,
@@ -108,7 +109,7 @@ const OrderStatus = ({
         ...(newStatus === 'rejected' && { rejectionReason })
       };
 
-      const url = `${import.meta.env.VITE_API_URL}/api/orders/${orderId}/status`;
+      const url = `${API_BASE_URL}/api/orders/${orderId}/status`;
       console.log('Making PUT request to:', url);
       console.log('Request Body:', requestBody);
 
@@ -176,7 +177,7 @@ const OrderStatus = ({
 
     try {
       setIsSubmitting(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${productId}/reviews`, {
+      const response = await fetch(`${API_BASE_URL}/api/products/${productId}/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

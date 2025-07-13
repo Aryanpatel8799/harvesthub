@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "@/context/AuthContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { API_BASE_URL } from "@/config/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -38,12 +39,19 @@ const Login = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Sign in form submitted');
     setIsLoading(true);
     try {
-      await login(email, password, accountType);
-      toast.success(`Logged in successfully as ${accountType}!`);
-      navigate("/dashboard");
+      const success = await login(email, password, accountType);
+      console.log('Login result:', success);
+      if (success) {
+        toast.success(`Logged in successfully as ${accountType}!`);
+        navigate("/dashboard");
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+      }
     } catch (error: any) {
+      console.error('Sign in error:', error);
       toast.error(error.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
@@ -54,7 +62,7 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/${accountType}s/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/${accountType}s/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

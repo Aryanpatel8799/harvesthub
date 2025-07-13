@@ -50,7 +50,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: false, // Set to false for debugging
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -66,17 +66,18 @@ app.use(cors({
         const allowedOrigins = [
             process.env.CLIENT_URL || 'http://localhost:5173',
             'http://localhost:5173',
-            'http://127.0.0.1:5173'
+            'http://localhost:8080',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:8080',
+            'https://harvesthub-backend-pdkm.onrender.com',
+            'https://harvesthub-frontend.onrender.com'
         ];
         
-        if (allowedOrigins.indexOf(origin) === -1) {
-            console.log('CORS blocked for origin:', origin);
-            console.log('Allowed origins:', allowedOrigins);
-        }
+        console.log('CORS request from origin:', origin);
+        console.log('Allowed origins:', allowedOrigins);
         
-        // Allow all origins in development mode
-        const isAllowed = process.env.NODE_ENV !== 'production' || allowedOrigins.indexOf(origin) !== -1;
-        callback(null, isAllowed);
+        // For debugging, allow all origins temporarily
+        callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { API_BASE_URL } from "@/config/api";
 import {
   Select,
   SelectContent,
@@ -58,7 +59,7 @@ const CertificationManagement = () => {
   const fetchCertifications = async () => {
     try {
       setLoading(true);
-      const apiUrl = `${import.meta.env.VITE_API_URL}/api/soil/certifications/pending`;
+      const apiUrl = `${API_BASE_URL}/api/soil/certifications/pending`;
       console.log('Fetching certifications from:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -119,7 +120,7 @@ const CertificationManagement = () => {
       });
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/soil/certifications/${selectedCert._id}`,
+        `${API_BASE_URL}/api/soil/certifications/${selectedCert._id}`,
         {
           method: 'PUT',
           headers: {
@@ -219,7 +220,7 @@ const CertificationManagement = () => {
                   {cert.certificateFile && (
                     <div className="mb-4 border rounded overflow-hidden">
                       <img
-                        src={`${import.meta.env.VITE_API_URL}/uploads/certificates/${cert.certificateFile}`}
+                        src={`${API_BASE_URL}/uploads/certificates/${cert.certificateFile}`}
                         alt="Soil Certificate"
                         className="w-full h-40 object-cover"
                       />

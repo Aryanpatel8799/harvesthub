@@ -12,14 +12,24 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        sync: false
+        value: mongodb+srv://your-username:your-password@your-cluster.mongodb.net/harvesthub
       - key: JWT_SECRET
-        sync: false
+        value: your-super-secret-jwt-key-here
       - key: SESSION_SECRET
-        sync: false
+        value: your-super-secret-session-key-here
       - key: STRIPE_SECRET_KEY
-        sync: false
+        value: sk_test_your_stripe_secret_key
       - key: STRIPE_WEBHOOK_SECRET
-        sync: false
+        value: whsec_your_stripe_webhook_secret
       - key: CLIENT_URL
-        value: http://localhost:8080 
+        value: http://localhost:8080
+
+  - type: web
+    name: harvesthub-frontend
+    env: static
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: NODE_ENV
+        value: production 

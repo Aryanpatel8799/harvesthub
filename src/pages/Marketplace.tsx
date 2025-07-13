@@ -12,6 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import FarmerProfileForm from "@/components/FarmerProfileForm";
+import { API_BASE_URL, getFullUrl } from "@/config/api";
 
 interface Product {
   _id: string;
@@ -100,7 +101,7 @@ const Marketplace = () => {
       if (searchTerm) queryParams.append('search', searchTerm);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/products?${queryParams}`,
+        `${API_BASE_URL}/api/products?${queryParams}`,
         { credentials: 'include' }
       );
 
@@ -215,6 +216,8 @@ const Marketplace = () => {
   };
 
   const handleDeleteProduct = async (productId: string, farmerId: string) => {
+    console.log('Delete product called with:', { productId, farmerId, user });
+    
     if (!user?._id) {
       toast({
         title: "Error",
@@ -237,8 +240,12 @@ const Marketplace = () => {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
     try {
+      console.log('Making DELETE request to:', `${API_BASE_URL}/api/products/${productId}`);
+      console.log('User ID:', user._id);
+      console.log('Farmer ID:', farmerId);
+      
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/products/${productId}`,
+        `${API_BASE_URL}/api/products/${productId}`,
         {
           method: 'DELETE',
           credentials: 'include',
@@ -296,8 +303,7 @@ const Marketplace = () => {
       return '/placeholder-product.jpg';
     }
     const imageUrl = product.images[0].url;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
+    return getFullUrl(imageUrl);
   };
 
   const getFarmImageUrl = (product: Product) => {
@@ -305,8 +311,7 @@ const Marketplace = () => {
       return '/placeholder-farm.jpg';
     }
     const imageUrl = product.farmImages[0].url;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
+    return getFullUrl(imageUrl);
   };
 
   return (
@@ -566,8 +571,8 @@ const Marketplace = () => {
                 }
 
                 const url = editingProduct?._id
-                  ? `${import.meta.env.VITE_API_URL}/api/products/${editingProduct._id}`
-                  : `${import.meta.env.VITE_API_URL}/api/products`;
+                  ? `${API_BASE_URL}/api/products/${editingProduct._id}`
+                  : `${API_BASE_URL}/api/products`;
                 
                 const method = editingProduct?._id ? 'PUT' : 'POST';
 
@@ -753,7 +758,7 @@ const Marketplace = () => {
             }}
             onSubmit={async (formData) => {
               try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/farmers/profile`, {
+                const response = await fetch(`${API_BASE_URL}/api/farmers/profile`, {
                   method: 'PUT',
                   body: formData,
                   credentials: 'include'

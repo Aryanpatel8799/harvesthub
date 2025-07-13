@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Video, ShoppingCart, Star, MapPin } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 interface FarmerProfileFormProps {
   initialData?: {
@@ -46,7 +47,7 @@ const FarmerProfileForm = ({ initialData, onSubmit, onCancel }: FarmerProfileFor
   const getImageUrl = (url: string) => {
     if (!url) return '/placeholder.jpg';
     if (url.startsWith('http')) return url;
-    return `${import.meta.env.VITE_API_URL}${url}`;
+    return `${API_BASE_URL}${url}`;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

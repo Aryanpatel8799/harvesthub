@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, Package } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 interface Order {
   _id: string;
@@ -62,7 +63,7 @@ export default function FarmerOrders() {
   const fetchOrders = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/orders/farmer`,
+        `${API_BASE_URL}/api/orders/farmer`,
         {
           credentials: 'include',
         }
@@ -105,7 +106,7 @@ export default function FarmerOrders() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/orders/${orderId}/status`,
+        `${API_BASE_URL}/api/orders/${orderId}/status`,
         {
           method: 'PUT',
           headers: {

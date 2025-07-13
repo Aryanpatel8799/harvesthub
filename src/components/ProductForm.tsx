@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { API_BASE_URL } from "@/config/api";
 
 interface ProductFormProps {
   onSubmit: (formData: FormData) => void;
@@ -71,12 +72,12 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
       setPreviewImages(initialData.images.map(img => {
         const url = img.url;
         if (url.startsWith('http')) return url;
-        return `${import.meta.env.VITE_API_URL}${url}`;
+        return `${API_BASE_URL}${url}`;
       }));
       setPreviewFarmImages(initialData.farmImages.map(img => {
         const url = img.url;
         if (url.startsWith('http')) return url;
-        return `${import.meta.env.VITE_API_URL}${url}`;
+        return `${API_BASE_URL}${url}`;
       }));
     }
   }, [initialData]);
@@ -452,7 +453,7 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               {previewImages.map((url, index) => (
                 <div key={index} className="relative group">
                   <img
-                    src={url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`}
+                    src={url.startsWith('http') ? url : `${API_BASE_URL}${url}`}
                     alt={`Product ${index + 1}`}
                     className="w-full h-32 object-cover rounded-md"
                   />
@@ -486,7 +487,7 @@ const ProductForm = ({ onSubmit, onCancel, initialData }: ProductFormProps) => {
               {previewFarmImages.map((url, index) => (
                 <div key={index} className="relative group">
                   <img
-                    src={url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`}
+                    src={url.startsWith('http') ? url : `${API_BASE_URL}${url}`}
                     alt={`Farm ${index + 1}`}
                     className="w-full h-32 object-cover rounded-md"
                   />

@@ -103,6 +103,7 @@ const auth = async (req, res, next) => {
         req.user = user;
         req.user.type = decoded.role || decoded.type;
         console.log('User set in request:', req.user._id, 'with type:', req.user.type);
+        console.log('Full user object:', req.user);
       }
       
       console.log('Auth successful for user:', req.user._id);

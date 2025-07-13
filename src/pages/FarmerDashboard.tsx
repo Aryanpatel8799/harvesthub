@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, Clock, Package } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 interface Order {
   _id: string;
@@ -62,7 +63,7 @@ const FarmerDashboard = () => {
   const fetchOrders = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/orders/farmer`,
+        `${API_BASE_URL}/api/orders/farmer`,
         {
           credentials: 'include',
         }
@@ -94,7 +95,7 @@ const FarmerDashboard = () => {
     try {
       setIsSubmitting(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/orders/${orderId}/status`,
+        `${API_BASE_URL}/api/orders/${orderId}/status`,
         {
           method: 'PATCH',
           headers: {

@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { FileText, CheckCircle, XCircle, Clock, Upload, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { API_BASE_URL } from '../config/api';
 
 // Create axios instance with base URL and default configs
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: API_BASE_URL,
   withCredentials: true
 });
 

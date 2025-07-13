@@ -21,10 +21,11 @@ import DetailedStats from './DetailedStats';
 import RecentActivity from './RecentActivity';
 import axios from 'axios';
 import { Skeleton } from '@/components/ui/skeleton';
+import { API_BASE_URL } from '../../config/api';
 
 // Create API instance
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: API_BASE_URL,
   withCredentials: true
 });
 

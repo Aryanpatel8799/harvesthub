@@ -42,6 +42,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import OrderStatus from "@/components/OrderStatus";
+import { API_BASE_URL } from "@/config/api";
 
 interface Product {
   _id: string;
@@ -103,7 +104,7 @@ const ConsumerDashboard = () => {
   const fetchOrders = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/orders/consumer`,
+        `${API_BASE_URL}/api/orders/consumer`,
         {
           credentials: 'include',
         }

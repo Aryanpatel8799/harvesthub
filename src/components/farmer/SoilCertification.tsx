@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Upload } from 'lucide-react';
+import { API_BASE_URL } from "@/config/api";
 
 interface SoilCertificationProps {
   farmerId: string;
@@ -43,7 +44,7 @@ const SoilCertification = ({ farmerId, onUploadSuccess }: SoilCertificationProps
       const formData = new FormData();
       formData.append('certificate', file);
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/farmers/${farmerId}/soil-certification`, {
+      const response = await fetch(`${API_BASE_URL}/api/farmers/${farmerId}/soil-certification`, {
         method: 'POST',
         credentials: 'include',
         body: formData

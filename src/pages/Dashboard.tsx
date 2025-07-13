@@ -7,6 +7,7 @@ import AIRecommendation from "@/components/AIRecommendation";
 import { Calendar, Truck, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Weather } from "@/components/Weather";
 import { useToast } from "@/components/ui/use-toast";
+import { API_BASE_URL } from "@/config/api";
 
 interface Order {
   _id: string;
@@ -77,8 +78,8 @@ const Dashboard = () => {
         
         // Determine which endpoint to use based on user role
         const endpoint = user?.type === 'farmer' 
-          ? `${import.meta.env.VITE_API_URL}/api/orders/farmer`
-          : `${import.meta.env.VITE_API_URL}/api/orders/consumer`;
+          ? `${API_BASE_URL}/api/orders/farmer`
+          : `${API_BASE_URL}/api/orders/consumer`;
         
         const response = await fetch(endpoint, {
           method: 'GET',

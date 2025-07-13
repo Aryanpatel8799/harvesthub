@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2, ShoppingCart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { API_BASE_URL } from "@/config/api";
 
 interface OrderDetails {
   _id: string;
@@ -55,8 +56,8 @@ export default function OrderConfirmation() {
       setError(null);
       
       try {
-        console.log(`Fetching order ${orderId} from ${import.meta.env.VITE_API_URL}/api/orders/${orderId}`);
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}`, {
+        console.log(`Fetching order ${orderId} from ${API_BASE_URL}/api/orders/${orderId}`);
+        const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ export default function OrderConfirmation() {
         // If we came from a successful payment, update the status
         if (paymentStatus === "success" && paymentIntentId) {
           try {
-            await fetch(`${import.meta.env.VITE_API_URL}/api/payments/status/${orderId}`, {
+            await fetch(`${API_BASE_URL}/api/payments/status/${orderId}`, {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",

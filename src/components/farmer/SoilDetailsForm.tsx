@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Upload, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from "@/config/api";
 
 interface SoilDetailsFormProps {
   onSubmitSuccess?: () => void;
@@ -130,7 +131,7 @@ const SoilDetailsForm = ({ onSubmitSuccess }: SoilDetailsFormProps) => {
       // Append certificate file
       submitFormData.append('certificate', selectedFile);
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/farmers/${user?._id}/soil-details`, {
+      const response = await fetch(`${API_BASE_URL}/api/farmers/${user?._id}/soil-details`, {
         method: 'POST',
         credentials: 'include',
         body: submitFormData

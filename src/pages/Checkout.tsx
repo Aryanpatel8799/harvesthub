@@ -7,6 +7,7 @@ import CheckoutForm from "@/components/Checkout";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
+import { API_BASE_URL } from "@/config/api";
 
 // Initialize Stripe
 const stripePromise = loadStripe('pk_test_51R5Xc3RsnrUQKVTh8gmSSelddvy8wtZDd4ejsEiiDeuvMNN5X0kntRr9Ppvyx4LKVzOY6qjm3EFowbk9M1bw6wG100cL307Fkr');
@@ -65,7 +66,7 @@ export default function Checkout() {
     const createPaymentIntent = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/create-payment-intent`, {
+        const response = await fetch(`${API_BASE_URL}/api/payments/create-payment-intent`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE_URL, getFullUrl } from "@/config/api";
 
 export interface ProductCardProps {
   _id: string;
@@ -112,8 +113,7 @@ const ProductCard = ({
 
   const getImageUrl = (url: string) => {
     if (!url) return '/placeholder.jpg';
-    if (url.startsWith('http')) return url;
-    return `${import.meta.env.VITE_API_URL}${url}`;
+    return getFullUrl(url);
   };
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -160,7 +160,7 @@ const ProductCard = ({
       const totalPrice = actualPrice * quantity;
 
       // Create the order first
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -237,7 +237,7 @@ const ProductCard = ({
 
     try {
       setIsSubmitting(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${_id}/reviews`, {
+              const response = await fetch(`${API_BASE_URL}/api/products/${_id}/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,7 +297,7 @@ const ProductCard = ({
     
     try {
       setLoadingFarmer(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/farmers/${farmerId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/farmers/${farmerId}`, {
         credentials: 'include'
       });
 

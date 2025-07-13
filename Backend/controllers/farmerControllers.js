@@ -35,7 +35,7 @@ const registerFarmer = async (req, res) => {
     // Set cookie with token
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false for debugging
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
@@ -78,7 +78,7 @@ const loginFarmer = async (req, res) => {
     // Set cookie with token
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false for debugging
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
@@ -119,7 +119,10 @@ const logoutFarmer = async (req, res) => {
 
 const getFarmerProfile = async (req, res) => {
   try {
-    const farmerId = req.user.id;
+    const farmerId = req.user._id || req.user.id;
+    console.log('Getting profile for farmer ID:', farmerId);
+    console.log('User object:', req.user);
+    
     const farmer = await Farmer.findById(farmerId).select("-password");
 
     if (!farmer) {
@@ -139,9 +142,14 @@ const updateFarmerProfile = async (req, res) => {
   try {
     const baseUrl = process.env.SERVER_URL || "http://localhost:5000";
     const updates = { ...req.body };
+    const farmerId = req.user._id || req.user.id;
+    
+    console.log('Updating profile for farmer ID:', farmerId);
+    console.log('User object:', req.user);
+    console.log('Update data:', updates);
 
     // Get existing farmer data to merge with new images/videos
-    const existingFarmer = await Farmer.findById(req.user.id);
+    const existingFarmer = await Farmer.findById(farmerId);
     if (!existingFarmer) {
       return res.status(404).json({
         success: false,
@@ -180,7 +188,7 @@ const updateFarmerProfile = async (req, res) => {
     }
 
     const farmer = await Farmer.findByIdAndUpdate(
-      req.user.id,
+      farmerId,
       { $set: updates },
       { new: true, runValidators: true },
     );
