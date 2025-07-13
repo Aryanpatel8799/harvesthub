@@ -71,8 +71,8 @@ app.use(cors({
             'http://127.0.0.1:8080',
             'https://harvesthub-backend-pdkm.onrender.com',
             'https://harvesthub-frontend.onrender.com',
-            'https://harvesthub.onrender.com'
-                    'https://harvesthub-bqv1-80hc6psly-aryan-patels-projects-e6951771.vercel.app',
+            'https://harvesthub.onrender.com',
+            'https://harvesthub-bqv1-80hc6psly-aryan-patels-projects-e6951771.vercel.app',
 ];
         
         console.log('CORS request from origin:', origin);
