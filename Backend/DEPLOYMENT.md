@@ -49,7 +49,7 @@ JWT_SECRET=your-super-secret-jwt-key-here
 SESSION_SECRET=your-session-secret-key-here
 STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-CLIENT_URL=https://your-frontend-domain.onrender.com
+CLIENT_URL=http://localhost:8080
 ```
 
 ## Step 4: Important Notes
@@ -67,12 +67,24 @@ CLIENT_URL=https://your-frontend-domain.onrender.com
 - Add Render's IP to MongoDB Atlas whitelist if needed
 
 ### CORS
-- Update `CLIENT_URL` to match your frontend domain
+- Currently set to `http://localhost:8080` for local development
+- When you deploy your frontend, update `CLIENT_URL` to match your frontend domain
 - The backend is configured to allow multiple origins
 
 ## Step 5: Testing
 
 After deployment, test your API endpoints:
+
+## Step 6: Updating Frontend URL (When Frontend is Deployed)
+
+When you deploy your frontend, you'll need to update the `CLIENT_URL` environment variable:
+
+1. Go to your Render service dashboard
+2. Navigate to "Environment" tab
+3. Update `CLIENT_URL` to your frontend domain (e.g., `https://your-frontend.onrender.com`)
+4. Redeploy the service
+
+The backend will automatically allow requests from the new frontend domain.
 
 ```bash
 curl https://your-backend-name.onrender.com/
