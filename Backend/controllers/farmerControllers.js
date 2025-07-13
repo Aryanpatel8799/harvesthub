@@ -32,13 +32,12 @@ const registerFarmer = async (req, res) => {
     // Generate token
     const token = farmer.generateAuthToken();
 
-    // Set cookie with token
+    // Set cookie with token - remove domain restriction for localhost
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use secure in production
+      secure: false, // Disable secure for localhost development
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
-      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     });
 
     const farmerData = farmer.toPublicProfile();
@@ -77,13 +76,12 @@ const loginFarmer = async (req, res) => {
     // Generate token
     const token = farmer.generateAuthToken();
 
-    // Set cookie with token
+    // Set cookie with token - remove domain restriction for localhost
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use secure in production
+      secure: false, // Disable secure for localhost development
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
-      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     });
 
     const farmerData = farmer.toPublicProfile();
