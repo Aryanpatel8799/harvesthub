@@ -50,7 +50,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Set to false for debugging
+        secure: false, // Temporarily disable secure for testing
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -70,14 +70,20 @@ app.use(cors({
             'http://127.0.0.1:5173',
             'http://127.0.0.1:8080',
             'https://harvesthub-backend-pdkm.onrender.com',
-            'https://harvesthub-frontend.onrender.com'
+            'https://harvesthub-frontend.onrender.com',
+            'https://harvesthub.onrender.com'
         ];
         
         console.log('CORS request from origin:', origin);
         console.log('Allowed origins:', allowedOrigins);
         
-        // For debugging, allow all origins temporarily
-        callback(null, true);
+        // Check if origin is in allowed list
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked for origin:', origin);
+            callback(null, false);
+        }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

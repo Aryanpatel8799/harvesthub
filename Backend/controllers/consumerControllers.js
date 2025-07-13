@@ -31,8 +31,10 @@ const registerConsumer = async (req, res) => {
     // Set cookie with token
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, // Set to false for debugging
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
+      secure: process.env.NODE_ENV === 'production', // Use secure in production
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     });
 
     const consumerData = consumer.toPublicProfile();
@@ -75,8 +77,10 @@ const loginConsumer = async (req, res) => {
     // Set cookie with token
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, // Set to false for debugging
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
+      secure: process.env.NODE_ENV === 'production', // Use secure in production
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     });
 
     const consumerData = consumer.toPublicProfile();
