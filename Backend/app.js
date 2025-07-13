@@ -89,6 +89,12 @@ app.use(cors({
 const uploadsDir = path.join(__dirname, 'uploads');
 const certificatesDir = path.join(uploadsDir, 'certificates');
 
+// Production warning for file uploads
+if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️  WARNING: File uploads in production will be lost on server restart.');
+    console.warn('   Consider using cloud storage (AWS S3, Cloudinary, etc.) for production.');
+}
+
 if (!fs.existsSync(uploadsDir)) {
     console.log('Creating uploads directory:', uploadsDir);
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -252,17 +258,6 @@ app.use((req, res) => {
         path: req.path,
         method: req.method
     });
-});
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
-
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
 });
 
 module.exports = app;
