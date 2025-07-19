@@ -57,9 +57,17 @@ adminSchema.methods.comparePassword = async function(candidatePassword) {
 
 // Generate auth token
 adminSchema.methods.generateAuthToken = function() {
+  // Always use hardcoded JWT_SECRET for testing to ensure consistency
+  const JWT_SECRET = '8799';
+  
+  // Compare with env variable to detect mismatches
+  if (process.env.JWT_SECRET !== JWT_SECRET) {
+    console.log('WARNING: JWT_SECRET mismatch between hardcoded and environment variable');
+  }
+  
   return jwt.sign(
     { id: this._id, type: 'admin', role: this.role },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: '1d' }
   );
 };

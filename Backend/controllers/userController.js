@@ -108,9 +108,12 @@ exports.checkAuth = async (req, res) => {
     const { password, ...userWithoutPassword } = req.user.toObject();
     
     // Make sure we include type field for frontend compatibility
-    const userType = req.user.role || req.user.type;
+    let userType = req.user.role || req.user.type;
+    // Always set type: 'admin' for admin and super roles
+    if (userType === 'admin' || userType === 'super') {
+      userType = 'admin';
+    }
     console.log('User type for response:', userType);
-    
     res.status(200).json({
       success: true,
       user: {

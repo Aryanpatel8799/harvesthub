@@ -28,13 +28,17 @@ import FarmerOrders from "@/pages/FarmerOrders";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminRoutes from "@/routes/AdminRoutes";
 import GoogleTranslate from "@/components/GoogleTranslate"; // ✅ Import Google Translate Component
+import AdminProtectedRoute from "@/routes/AdminProtectedRoute";
 
 // Initialize Stripe
 const stripePromise = loadStripe('pk_test_51R5Xc3RsnrUQKVTh8gmSSelddvy8wtZDd4ejsEiiDeuvMNN5X0kntRr9Ppvyx4LKVzOY6qjm3EFowbk9M1bw6wG100cL307Fkr');
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
+
+  // Debug logging
+  console.log('App ProtectedRoute:', { isAuthenticated, loading, user });
 
   if (loading) {
     return (
@@ -54,6 +58,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Farmer-only route
 const FarmerOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
+
+  // Debug logging
+  console.log('App FarmerOnlyRoute:', { user, loading });
 
   if (loading) {
     return (

@@ -7,6 +7,9 @@ import CertificationManagement from '@/components/admin/CertificationManagement'
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
 
+  // Debug logging
+  console.log('Admin ProtectedRoute:', { user, loading });
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -37,7 +40,9 @@ const AdminRoutes = () => {
 
   return (
     <Routes>
+      {/* DO NOT wrap login in ProtectedRoute */}
       <Route path="/login" element={<AdminLogin />} />
+      {/* Only wrap protected pages */}
       <Route
         path="/dashboard"
         element={

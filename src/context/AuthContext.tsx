@@ -35,8 +35,11 @@ api.interceptors.response.use(
       localStorage.removeItem('userType');
       console.log('Authentication failed, clearing user data');
       
-      // Only redirect if not already on login page
-      if (window.location.pathname !== '/login') {
+      // Only redirect if not already on any login page
+      if (
+        window.location.pathname !== '/login' &&
+        window.location.pathname !== '/admin/login'
+      ) {
         console.log('Redirecting to login page');
         window.location.href = '/login';
       }

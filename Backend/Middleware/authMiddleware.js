@@ -63,7 +63,7 @@ const auth = async (req, res, next) => {
       console.log('Token decoded successfully:', decoded);
       
       // Find user by id
-      if (decoded.role === 'admin') {
+      if (decoded.role === 'admin' || decoded.role === 'super') {
         console.log('Looking up admin user with id:', decoded.id);
         const admin = await Admin.findById(decoded.id).select('-password');
         if (!admin) {
@@ -71,7 +71,7 @@ const auth = async (req, res, next) => {
           return res.status(401).json({ message: 'Admin not found' });
         }
         req.user = admin;
-        req.user.role = 'admin';
+        req.user.role = decoded.role; // set to 'admin' or 'super'
         req.user.type = 'admin';
         console.log('Admin user set in request:', req.user._id);
       } else {
