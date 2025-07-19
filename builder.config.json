@@ -1,6 +1,6 @@
 {
   "command": "npm run dev",
-  "serverUrl": "https://harvesthub-backend-pdkm.onrender.com/",
+  "serverUrl": "http://localhost:4000/",
   "authenticateProxy": false,
   "commitMode": "commits"
 }

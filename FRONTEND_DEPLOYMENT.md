@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-1. ✅ Backend deployed and working at: `https://harvesthub-backend-pdkm.onrender.com`
+1. ✅ Backend deployed and working at: `http://localhost:4000`
 2. Frontend code ready for deployment
 3. Render account
 
 ## Step 1: Update Environment Variables
 
 Your frontend is now configured to automatically use the deployed backend URL in production. The `API_BASE_URL` in `src/config/api.ts` will automatically switch to:
-- **Production**: `https://harvesthub-backend-pdkm.onrender.com`
+- **Production**: `http://localhost:4000`
 - **Development**: `http://localhost:8080`
 
 ## Step 2: Deploy on Render
@@ -74,7 +74,7 @@ Set these environment variables in your Render frontend service:
 
 ```
 NODE_ENV=production
-VITE_API_BASE_URL=https://harvesthub-backend-pdkm.onrender.com
+VITE_API_BASE_URL=http://localhost:4000
 ```
 
 ## Step 4: Update Backend CORS (Important!)
@@ -91,8 +91,8 @@ After deploying your frontend, update the backend's `CLIENT_URL` environment var
 After deployment, test these endpoints:
 
 1. **Frontend**: Visit your frontend URL
-2. **Backend API**: `https://harvesthub-backend-pdkm.onrender.com/`
-3. **Products API**: `https://harvesthub-backend-pdkm.onrender.com/api/products`
+2. **Backend API**: `http://localhost:4000/`
+3. **Products API**: `http://localhost:4000/api/products`
 
 ## Step 6: AI Service (Optional)
 
@@ -118,10 +118,10 @@ The Disease Detection feature uses a separate AI service. You have two options:
 
 ```bash
 # Test backend
-curl https://harvesthub-backend-pdkm.onrender.com/
+curl http://localhost:4000/
 
 # Test products API
-curl https://harvesthub-backend-pdkm.onrender.com/api/products
+curl http://localhost:4000/api/products
 ```
 
 ## Production Considerations

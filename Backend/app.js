@@ -69,10 +69,11 @@ app.use(cors({
             'http://localhost:8080',
             'http://127.0.0.1:5173',
             'http://127.0.0.1:8080',
-            'https://harvesthub-backend-pdkm.onrender.com',
+            'http://localhost:4000',
             'https://harvesthub-frontend.onrender.com',
             'https://harvesthub.onrender.com',
             'https://harvesthub-bqv1-80hc6psly-aryan-patels-projects-e6951771.vercel.app',
+            'http://localhost:5001'
 ];
         
         console.log('CORS request from origin:', origin);

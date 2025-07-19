@@ -142,7 +142,7 @@ const getFarmerProfile = async (req, res) => {
 
 const updateFarmerProfile = async (req, res) => {
   try {
-    const baseUrl = process.env.SERVER_URL || "http://localhost:5000";
+    const baseUrl = process.env.SERVER_URL || "http://localhost:5001";
     const updates = { ...req.body };
     const farmerId = req.user._id || req.user.id;
     

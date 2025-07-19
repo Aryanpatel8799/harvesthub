@@ -141,52 +141,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('AuthProvider mounted, checking auth status');
     console.log('Current pathname:', window.location.pathname);
 
-    // Check if user is already in localStorage
-    const storedUser = getUserFromStorage();
-    if (storedUser) {
-      console.log('User found in localStorage:', storedUser);
-      
-      // Check if token cookie exists
-      const token = getCookie('token');
-      if (!token) {
-        console.log('User found in localStorage but no token cookie - clearing user data');
-        setUser(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('userType');
-        setLoading(false);
-        hasCheckedAuth.current = true;
-        return;
-      }
-      
-      setUser(storedUser);
-      setLoading(false);
-      hasCheckedAuth.current = true;
-      return;
-    }
-
-    // If no stored user, try to check auth status from server
+    // Always try to check auth status from server first
     checkAuthStatus();
     hasCheckedAuth.current = true;
   }, []); // Empty dependency array - only run once
 
   const checkAuthStatus = async () => {
     try {
-      // Use the general auth endpoint since specific check-auth endpoints don't exist
+      // Try the check-auth endpoint
       const endpoint = '/api/auth/check-auth';
       
       console.log('Checking auth status with endpoint:', endpoint);
       const response = await api.get(endpoint);
 
       if (response.data && response.data.user) {
+        console.log('User authenticated:', response.data.user);
         setUser(response.data.user);
       } else {
+        console.log('No user data in response');
         setUser(null);
       }
     } catch (error) {
       console.error('Auth status check error:', error);
-      // If check-auth fails, just set user to null without trying localStorage
-      // This prevents infinite loops
-      setUser(null);
+      
+      // If check-auth fails, try to get user from localStorage as fallback
+      const storedUser = getUserFromStorage();
+      if (storedUser) {
+        console.log('Using stored user as fallback:', storedUser);
+        setUser(storedUser);
+      } else {
+        console.log('No stored user found, clearing auth state');
+        setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('userType');
+      }
     } finally {
       setLoading(false);
     }

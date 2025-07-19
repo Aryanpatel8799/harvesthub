@@ -45,7 +45,7 @@ const DiseaseDetection = () => {
     try {
       // Note: This is a separate AI service, not part of the main backend
       // You may need to deploy this separately or update the URL
-      const response = await fetch("http://localhost:5000/api/predict", {
+      const response = await fetch("http://localhost:5001/api/predict", {
         method: "POST",
         body: formData,
       });

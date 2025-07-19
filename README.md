@@ -217,7 +217,7 @@ To become the world's leading agricultural e-commerce platform, setting new stan
 
    # Frontend .env
    VITE_API_URL=http://localhost:3000
-   VITE_MODEL_URL=http://localhost:5000
+   VITE_MODEL_URL=http://localhost:5001
 
    ```
 

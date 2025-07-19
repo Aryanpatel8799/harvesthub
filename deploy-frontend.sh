@@ -23,10 +23,10 @@ echo "✅ Git repository found"
 
 # Check if backend is deployed
 echo "🔍 Checking backend status..."
-if curl -s "https://harvesthub-backend-pdkm.onrender.com/" > /dev/null; then
-    echo "✅ Backend is running at: https://harvesthub-backend-pdkm.onrender.com"
+if curl -s "http://localhost:4000/" > /dev/null; then
+    echo "✅ Backend is running at: http://localhost:4000"
 else
-    echo "⚠️  Backend might not be running. Please check: https://harvesthub-backend-pdkm.onrender.com"
+    echo "⚠️  Backend might not be running. Please check: http://localhost:4000"
 fi
 
 echo ""
